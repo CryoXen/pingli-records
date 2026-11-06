@@ -1,0 +1,299 @@
+/*
+ * pingli records — panel de lanzamiento.
+ * Una ventana de 1 px a la derecha, debajo de la línea de arriba.
+ * Usa las variables de globals.css, así que cambia sola de lado.
+ */
+
+.panel {
+  /* dónde empieza: debajo de la línea del volumen y las coordenadas */
+  --panel-top: 60px;
+  position: fixed;
+  z-index: 20;
+  top: var(--panel-top);
+  right: max(var(--gutter), env(safe-area-inset-right, 0px));
+  width: min(360px, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100% - var(--panel-top) - var(--gutter) - env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-family: var(--font-ui);
+  visibility: hidden;
+}
+
+.panel[data-open] {
+  visibility: visible;
+}
+
+/* barra de ventana: número de catálogo y cerrar */
+.panel-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 7px 12px 6px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+
+.panel-close {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.panel-close:hover {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.panel-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 20px;
+  outline: none;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  font-stretch: 125%;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.panel-meta {
+  margin: 8px 0 0;
+  color: var(--ink-2);
+}
+
+.panel-desc {
+  margin-top: 22px;
+}
+
+.panel-desc p {
+  margin: 0 0 0.8em;
+}
+
+.panel-desc p:last-child {
+  margin-bottom: 0;
+}
+
+.panel-tags {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* etiquetas: botones que resaltan en el lienzo */
+.panel-tag {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.panel-tag:hover {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.panel-tag[aria-pressed="true"] {
+  color: var(--link);
+}
+
+.panel-tag:focus-visible {
+  outline: 1px solid var(--link);
+  outline-offset: 3px;
+}
+
+/* lanzamientos con la etiqueta encendida: en color de link y con su #etiqueta;
+   el resto se atenúa */
+.release {
+  transition: opacity 0.4s ease;
+}
+
+:root[data-tagging] .release:not([data-tagged]):not([data-lod="hidden"]) {
+  opacity: 0.22;
+}
+
+:root[data-tagging] .release[data-tagged] {
+  border-color: var(--link);
+}
+
+:root[data-tagging] .release[data-tagged] .release-caption {
+  color: var(--link);
+}
+
+:root[data-tagging] .release[data-tagged] .release-alt {
+  visibility: hidden;
+}
+
+/* la #etiqueta toma el lugar del nombre de archivo */
+:root[data-tagging] .release[data-tagged]::after {
+  content: attr(data-tagged);
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--link);
+}
+
+.release[data-lod="small"]::after {
+  display: none;
+}
+
+/* dónde conseguirlo */
+.panel-stores {
+  margin-top: 26px;
+  padding-top: 12px;
+  border-top: 1px solid var(--grid);
+}
+
+.panel-label {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.panel-stores ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.panel-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--link);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.panel-store:hover .panel-store-label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.panel-store[data-off] {
+  color: var(--grid);
+  cursor: default;
+}
+
+.panel-store[data-off]:hover .panel-store-label {
+  text-decoration: none;
+}
+
+/* ícono pendiente: un marco vacío, como los lanzamientos */
+.panel-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid currentColor;
+}
+
+img.panel-icon {
+  border: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.panel-close:focus-visible,
+.panel-store:focus-visible {
+  outline: 1px solid var(--link);
+  outline-offset: 3px;
+}
+
+/* el cuadro seleccionado en el lienzo */
+.release[data-selected] {
+  border-color: var(--link);
+}
+
+.release[data-selected] .release-caption {
+  color: var(--link);
+}
+
+@media (max-width: 720px) {
+  .panel {
+    inset: 0;
+    width: auto;
+    max-height: none;
+    border: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .panel-bar {
+    padding: 14px var(--gutter) 12px;
+  }
+
+  .panel-body {
+    padding: 22px var(--gutter) 28px;
+  }
+}
+
+/* la foto del lanzamiento (desde el admin): llena el cuadro; sin foto queda
+   el cuadro vacío con su nombre de archivo */
+.release-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.release:has(.release-img) .release-alt {
+  display: none;
+}

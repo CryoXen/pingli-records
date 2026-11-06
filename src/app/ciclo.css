@@ -1,0 +1,110 @@
+/*
+ * pingli records — la previsión que aparece a los 3:33.
+ * Entra de golpe, sin transición, por encima de todo.
+ */
+
+.prevision {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  /* aire alrededor, y lejos de la muesca y la barra del teléfono (el tamaño
+     de la imagen lo calcula src/lib/ciclo.ts con este margen) */
+  --px: max(20px, 6vmin);
+  --py: max(28px, 7vmin);
+  padding: calc(var(--py) + env(safe-area-inset-top, 0px)) calc(var(--px) + env(safe-area-inset-right, 0px))
+    calc(var(--py) + env(safe-area-inset-bottom, 0px)) calc(var(--px) + env(safe-area-inset-left, 0px));
+  background: var(--paper);
+  cursor: none;
+  /* quieta: no se arrastra, no se selecciona, no se amplía ni abre menús */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* la imagen, centrada exacto; su nombre cuelga debajo sin moverla del centro */
+.prevision-obra {
+  position: relative;
+}
+
+.prevision img {
+  display: block;
+  box-sizing: border-box;
+  max-width: none;
+  border: 1px solid var(--ink);
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* imágenes chicas agrandadas 2× o más: sus pixeles, sin suavizar */
+.prevision[data-ampliada] img {
+  image-rendering: pixelated;
+}
+
+/* solo el nombre del archivo, como los cuadros del plano */
+.prevision-nombre {
+  position: absolute;
+  top: calc(100% + 10px); /* = CAPTION_GAP en ciclo.ts */
+  left: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--ink-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* "cover": llena toda la pantalla, sin marco ni nombre */
+.prevision[data-fit="cover"] {
+  padding: 0;
+}
+
+.prevision[data-fit="cover"] img {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  object-fit: cover;
+  border: 0;
+}
+
+/* la cuenta regresiva: abajo a la derecha, con la letra de las coordenadas,
+   en la misma línea base que el nombre */
+.clock {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: end;
+  align-self: last baseline;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+  /* se puede mantener presionada (la acción secreta del admin), sin seleccionar texto */
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.overlay .wordmark {
+  align-self: last baseline;
+}
+
+@media (max-width: 720px) {
+  .clock {
+    grid-column: 1;
+    grid-row: 4;
+    font-size: 12px;
+  }
+}

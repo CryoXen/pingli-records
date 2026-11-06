@@ -1,0 +1,68 @@
+/*
+ * pingli records — frases que brotan del plano.
+ * Monoespaciada (la misma de la figura ASCII): así las letras pueden
+ * degradarse en caracteres sin que la frase cambie de ancho.
+ */
+
+.phrase-layer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.phrase {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  width: max-content;
+  max-width: 30ch;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 15px; /* = phrases.size en site.ts */
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: pre-wrap;
+  transform-origin: 0 0;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* la cuenta: diez segundos, en gris, al final de la frase */
+.phrase-timer {
+  margin-left: 1.2ch;
+  font-size: 0.8em;
+  color: var(--ink-2);
+}
+
+.phrase-timer:empty {
+  display: none;
+}
+
+/* carteles: el dibujo arriba de la frase */
+.phrase-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.phrase-icon[hidden] {
+  display: none;
+}
+
+.phrase-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* la imagen de los carteles: pixel art de 14 × 16, al doble y sin suavizar */
+.phrase-img {
+  display: block;
+  width: 28px; /* la imagen mide 14 × 16: al doble, sin suavizar */
+  height: 32px;
+  image-rendering: pixelated;
+}

@@ -1,0 +1,121 @@
+/*
+ * pingli records — el muro de los carteles.
+ * Vive en el plano (dentro de la capa de frases) y se escala con el zoom:
+ * las medidas están en unidades del mundo (a zoom 1, px).
+ */
+
+.muro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0;
+  transform-origin: 0 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+}
+
+.muro-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 14px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--font-ui);
+  font-stretch: 125%;
+  font-weight: 600;
+  font-size: 34px;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+.muro-count {
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0;
+}
+
+.muro-label {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.muro-label + .muro-grid + .muro-label {
+  margin-top: 44px;
+}
+
+.muro-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 120px);
+  grid-auto-rows: 150px;
+  gap: 12px;
+}
+
+/* hueco: un marco con su número, como un lanzamiento que no cargó */
+.muro-cell {
+  position: relative;
+  overflow: hidden;
+  padding: 6px 7px;
+  border: 1px solid var(--grid);
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--ink-2);
+}
+
+/* cartel leído */
+.muro-cell[data-found] {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.muro-icon {
+  display: block;
+  width: 34px;
+  height: 34px;
+  margin: 2px 0 8px;
+}
+
+.muro-img {
+  display: block;
+  width: 28px; /* la imagen mide 14 × 16: al doble, sin suavizar */
+  height: 32px;
+  margin: 2px 0 8px;
+  image-rendering: pixelated;
+}
+
+.muro-cell p {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.muro-id {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  font-size: 8px;
+  color: var(--ink-2);
+}
+
+/* a la distancia: primero solo un rectángulo, luego los huecos sin texto */
+.muro[data-lod="far"] {
+  border: 1px solid var(--ink);
+}
+
+.muro[data-lod="far"] > * {
+  visibility: hidden;
+}
+
+.muro[data-lod="mid"] .muro-cell > * {
+  visibility: hidden;
+}
+
+.muro[data-lod="mid"] .muro-cell {
+  color: transparent;
+}

@@ -1,0 +1,269 @@
+/*
+ * pingli records — tokens y estilos globales.
+ *
+ * Lado claro (por defecto): papel gris frío, tinta negra, y el azul de
+ * link original de HTML como único acento.
+ * Lado oscuro (secreto): el casi-negro del video de referencia, y el acento
+ * pasa a violeta de "link visitado": el sitio sabe que ya estuviste aquí.
+ */
+
+:root {
+  --paper: #ecedef;
+  --ink: #000000;
+  --ink-2: #5d6067;
+  --grid: #9fa3aa;
+  --link: #0000ee;
+
+  --font-ui: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Courier Prime", "Courier New", monospace;
+  --gutter: 20px;
+
+  color-scheme: light;
+}
+
+:root[data-side="dark"] {
+  --paper: #080c0f;
+  --ink: #d7dbde;
+  --ink-2: #7b828a;
+  --grid: #353e45;
+  --link: #a47cff;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: var(--font-ui);
+  font-stretch: 125%;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* hasta que empieza la entrada animada (lo agrega el script de arranque) */
+.intro [data-intro],
+.intro .world-layer {
+  opacity: 0;
+}
+
+/* ───────── lienzo ───────── */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage[data-dragging] {
+  cursor: grabbing;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* ───────── lanzamientos ───────── */
+
+.world-layer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.release {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.release[data-lod="hidden"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* el nombre de archivo, como una imagen que no ha cargado */
+.release-alt {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--ink-2);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.release-caption {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: -1px;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.release[data-lod="small"] .release-alt,
+.release[data-lod="small"] .release-caption {
+  display: none;
+}
+
+.release:hover,
+.release:focus-visible {
+  border-color: var(--link);
+  outline: none;
+}
+
+.release:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 4px var(--link);
+}
+
+.release:hover .release-caption,
+.release:focus-visible .release-caption {
+  color: var(--link);
+}
+
+/* ───────── interfaz en las esquinas ───────── */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  column-gap: 2rem;
+  /* respeta las zonas seguras del teléfono (notch, barra de inicio) */
+  padding-block: calc(var(--gutter) + env(safe-area-inset-top, 0px))
+    calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+  pointer-events: none;
+}
+
+.overlay p,
+.overlay h1 {
+  margin: 0;
+}
+
+.overlay-top {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2.5rem;
+}
+
+.hud {
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: pre;
+}
+
+.hud span {
+  display: inline-block;
+  min-width: 4ch;
+  color: var(--ink);
+}
+
+.wordmark {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  font-size: clamp(26px, 2.8vw, 42px);
+  font-weight: 600;
+  font-stretch: 125%;
+  letter-spacing: -0.015em;
+  line-height: 0.95;
+}
+
+.hint {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: end;
+  max-width: 21ch;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --gutter: 16px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .overlay {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    row-gap: 1rem;
+  }
+
+  .overlay-top {
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+  }
+
+  .genres {
+    order: 3;
+    flex-basis: 100%;
+    color: var(--ink-2);
+  }
+
+  .hud {
+    margin-left: auto;
+    font-size: 12px;
+  }
+
+  .hint {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: end;
+    max-width: 24ch;
+  }
+
+  .wordmark {
+    grid-row: 4;
+  }
+}

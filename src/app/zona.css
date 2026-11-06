@@ -1,0 +1,49 @@
+/*
+ * pingli records — la zona: el cuarto dentro de la imagen rota.
+ * Cubre el plano (debajo de la interfaz: el volumen, las coordenadas, el
+ * nombre y la cuenta siguen encima). Adentro va el muro de los carteles,
+ * con su propio zoom.
+ */
+
+.zona {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.zona[hidden] {
+  display: none;
+}
+
+.zona[data-dragging] {
+  cursor: grabbing;
+}
+
+/* el muro, dentro de la zona, lo mueve la cámara de la zona. Va sin
+   will-change a propósito: así el navegador lo vuelve a dibujar nítido a
+   cualquier zoom. */
+
+/* en el encuadre completo los huecos son chicos: los leídos se ven llenos */
+.zona .muro[data-lod="mid"] .muro-cell[data-found] {
+  background: var(--ink);
+}
+
+/* el umbral: la imagen del cartel, que se abre al entrar */
+.zona-umbral {
+  position: fixed;
+  display: none;
+  image-rendering: pixelated;
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.zona[data-state="entering"] .zona-umbral {
+  display: block;
+}
