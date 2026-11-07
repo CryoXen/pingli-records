@@ -211,7 +211,10 @@ export const site = {
   cycle: {
     /** false = la visita no tiene fin. */
     enabled: true,
-    /** Segundos que dura cada visita, igual en los dos mundos (213 = 3:33). */
+    /**
+     * Segundos que dura cada visita, igual en los dos mundos (213 = 3:33).
+     * Con Supabase se cambia en el admin (previsiones → cuenta regresiva).
+     */
     duration: 213,
     /**
      * Segundos que se ve una foto de la previsión (los videos duran lo que

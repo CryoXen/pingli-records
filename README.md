@@ -33,7 +33,7 @@ Variables. Sin ellas el sitio funciona igual con lo de `src/config` y
 `/admin`, o mantener presionada la cuenta 3:33 (abajo a la derecha) 3.33 s.
 Frases por mundo, lanzamientos (foto, información, etiquetas, enlaces,
 posición), previsiones (fotos y videos de hasta 30 s, tipo y rareza, cuánto
-se ve cada foto), música (varias canciones de fondo por mundo y cuál suena;
+dura la cuenta regresiva y cuánto se ve cada foto), música (varias canciones de fondo por mundo y cuál suena;
 la canción final del contador) y sonidos de la interfaz (volumen global).
 Los videos largos se recortan al fragmento elegido y se convierten a MP4
 ligero en el navegador (mediabunny + WebCodecs) antes de subirse. Al guardar, la portada se rehace en segundos; además se revisa sola

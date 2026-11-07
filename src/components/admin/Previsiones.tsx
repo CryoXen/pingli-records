@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Previsiones: lo que aparece al terminar el ciclo de 3:33. Fotos y videos
+ * Previsiones: lo que aparece al terminar la cuenta regresiva (y cuánto dura
+ * esa cuenta). Fotos y videos
  * (MP4, hasta 30 s, con su sonido). Cada una lleva un tipo (para no mostrar
  * dos del mismo tipo seguidas) y una rareza (qué tan seguido sale). Solo
  * salen las activas que de verdad cargan.
@@ -14,7 +15,8 @@ import { site } from "@/config/site";
 import { analizarSonido, LUFS_MUSICA } from "@/lib/admin/analizar-sonido";
 import { rutaUnica, type AdminStore } from "@/lib/admin/store";
 import { convertirVideo, leerVideo, puedeConvertir, tiempo, VIDEO_MAX_S, type InfoVideo } from "@/lib/admin/video";
-import { completarPrevision, DURACION_FOTO, nombreDeRuta } from "@/lib/contenido/mapear";
+import { formatClock } from "@/lib/ciclo";
+import { completarPrevision, DURACION_CICLO, DURACION_FOTO, nombreDeRuta } from "@/lib/contenido/mapear";
 import { RAREZAS, type AjustesPrevision, type FilaPrevision, type Rareza } from "@/lib/contenido/tipos";
 import { Confirmar, EstadoTexto, Imagen, Segmentos, useEstado } from "./comun";
 
@@ -163,7 +165,7 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
 
   return (
     <section className="adm-seccion" aria-label="previsiones">
-      <DuracionFoto store={store} avisar={avisar} />
+      <TiemposCiclo store={store} avisar={avisar} />
 
       <div
         className="adm-subir"
@@ -293,8 +295,11 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
   );
 }
 
-/** Cuánto se ve cada foto (los videos duran lo que duran). */
-function DuracionFoto({ store, avisar }: { store: AdminStore; avisar: () => void }) {
+/**
+ * Los tiempos del ciclo: cuánto dura la cuenta regresiva de cada visita y
+ * cuánto se ve cada foto al terminar (los videos duran lo que duran).
+ */
+function TiemposCiclo({ store, avisar }: { store: AdminStore; avisar: () => void }) {
   const [a, setA] = useState<AjustesPrevision | null>(null);
   const [estado, correr] = useEstado();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -306,36 +311,101 @@ function DuracionFoto({ store, avisar }: { store: AdminStore; avisar: () => void
   }, [store]);
   useEffect(() => () => clearTimeout(timer.current), []);
   if (!a) return null;
-  const cambiar = (s: number) => {
-    const n = { ...a, duracionFoto: s };
-    setA(n);
+  const cambiar = (n: Partial<AjustesPrevision>) => {
+    const nuevo = completarPrevision({ ...a, ...n });
+    setA(nuevo);
     clearTimeout(timer.current);
     timer.current = setTimeout(
       () =>
         void correr(async () => {
-          await store.guardarAjuste("prevision", n);
+          await store.guardarAjuste("prevision", nuevo);
           avisar();
         }),
-      500,
+      600,
     );
   };
   return (
-    <div className="adm-volumen adm-duracion">
-      <label className="adm-campo">
-        <span>cada foto se ve (los videos duran lo que duran, hasta {VIDEO_MAX_S} s)</span>
-        <input
-          type="range"
-          min={DURACION_FOTO.min}
-          max={DURACION_FOTO.max}
-          step={1}
-          value={a.duracionFoto}
-          onChange={(e) => cambiar(Number(e.target.value))}
-          aria-valuetext={`${a.duracionFoto} segundos`}
-        />
-      </label>
-      <span className="adm-volumen-valor">{a.duracionFoto} s</span>
-      <EstadoTexto estado={estado} />
+    <div className="adm-ciclo">
+      <CuentaRegresiva valor={a.duracionCiclo} onChange={(s) => cambiar({ duracionCiclo: s })} />
+      <div className="adm-volumen adm-duracion">
+        <label className="adm-campo">
+          <span>al terminar, cada foto se ve (los videos duran lo que duran, hasta {VIDEO_MAX_S} s)</span>
+          <input
+            type="range"
+            min={DURACION_FOTO.min}
+            max={DURACION_FOTO.max}
+            step={1}
+            value={a.duracionFoto}
+            onChange={(e) => cambiar({ duracionFoto: Number(e.target.value) })}
+            aria-valuetext={`${a.duracionFoto} segundos`}
+          />
+        </label>
+        <span className="adm-volumen-valor">{a.duracionFoto} s</span>
+        <EstadoTexto estado={estado} />
+      </div>
     </div>
+  );
+}
+
+/** La cuenta regresiva en minutos y segundos (de 0:10 a 59:59). */
+function CuentaRegresiva({ valor, onChange }: { valor: number; onChange: (s: number) => void }) {
+  const [min, setMin] = useState(String(Math.floor(valor / 60)));
+  const [seg, setSeg] = useState(String(valor % 60));
+  // si llega otro valor (al cargar, o al volver al original), se reescribe
+  useEffect(() => {
+    setMin(String(Math.floor(valor / 60)));
+    setSeg(String(valor % 60));
+  }, [valor]);
+  const enviar = (m: string, s: string) => {
+    const mm = Math.max(0, Math.min(59, Math.floor(Number(m) || 0)));
+    const ss = Math.max(0, Math.min(59, Math.floor(Number(s) || 0)));
+    const total = Math.max(DURACION_CICLO.min, Math.min(DURACION_CICLO.max, mm * 60 + ss));
+    if (total !== valor) onChange(total);
+  };
+  const original = site.cycle.duration;
+  return (
+    <fieldset className="adm-campo adm-cuenta">
+      <legend>cuenta regresiva: cuánto dura cada visita antes de la previsión (de 0:10 a 59:59)</legend>
+      <div className="adm-tiempo">
+        <input
+          className="adm-input adm-num"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={59}
+          value={min}
+          aria-label="minutos"
+          onChange={(e) => {
+            setMin(e.target.value);
+            if (e.target.value !== "") enviar(e.target.value, seg);
+          }}
+          onBlur={() => setMin(String(Math.floor(valor / 60)))}
+        />
+        <span>min</span>
+        <input
+          className="adm-input adm-num"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={59}
+          value={seg}
+          aria-label="segundos"
+          onChange={(e) => {
+            setSeg(e.target.value);
+            if (e.target.value !== "") enviar(min, e.target.value);
+          }}
+          onBlur={() => setSeg(String(valor % 60))}
+        />
+        <span>s</span>
+        <span className="adm-volumen-valor adm-reloj">{formatClock(valor)}</span>
+        {valor !== original ? (
+          <button type="button" className="adm-link" onClick={() => onChange(original)}>
+            volver a {formatClock(original)}
+          </button>
+        ) : null}
+      </div>
+      <span className="adm-gris adm-nota-chica">la previsión se empieza a descargar 90 s antes del final (o desde el inicio, si dura menos).</span>
+    </fieldset>
   );
 }
 

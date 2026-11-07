@@ -11,7 +11,8 @@ import type { AjustesPrevision, MusicaUI, Prevision } from "@/lib/contenido/tipo
 /**
  * El ciclo de 3:33: la previsión (una foto con la canción final, o un video
  * con su sonido) y el regreso a "entrar". Todo viene del contenido (Supabase
- * o src/config): las previsiones, la canción final y cuánto se ve una foto.
+ * o src/config): las previsiones, la canción final, cuánto dura la cuenta
+ * regresiva y cuánto se ve una foto.
  * También la acción secreta: mantener presionada la cuenta lleva al admin.
  */
 export default function Ciclo({
@@ -25,7 +26,8 @@ export default function Ciclo({
 }) {
   useEffect(() => {
     const ambient = getAmbient(site.audio);
-    return mountCycle({ ...site.cycle, hold: prevision.duracionFoto }, images, entered, () => ambient.stop(), {
+    const ciclo = { ...site.cycle, duration: prevision.duracionCiclo, hold: prevision.duracionFoto };
+    return mountCycle(ciclo, images, entered, () => ambient.stop(), {
       // la canción final se descarga junto con la previsión y suena cuando aparece una foto
       prepare: () => final && void ambient.loadCue(final.src),
       show: () => final && void ambient.playCue(final.src, final.gainDb, final.inicio),

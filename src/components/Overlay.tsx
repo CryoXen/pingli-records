@@ -16,7 +16,7 @@ export type HudRefs = {
  * Arriba: volumen a la izquierda, coordenadas a la derecha.
  * Abajo: el nombre a la izquierda, la cuenta regresiva a la derecha.
  */
-export function Overlay({ hud }: { hud: HudRefs }) {
+export function Overlay({ hud, cuenta }: { hud: HudRefs; /** Segundos de la cuenta regresiva. */ cuenta: number }) {
   return (
     <div className="overlay">
       <header className="overlay-top">
@@ -31,7 +31,7 @@ export function Overlay({ hud }: { hud: HudRefs }) {
       {site.cycle.enabled ? (
         // cuenta regresiva de la visita; la mueve src/lib/ciclo.ts
         <p className="clock" data-intro="5" data-cycle-clock role="timer" aria-label="tiempo de la visita">
-          {formatClock(site.cycle.duration)}
+          {formatClock(cuenta)}
         </p>
       ) : null}
     </div>

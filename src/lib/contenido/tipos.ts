@@ -174,6 +174,8 @@ export type MusicaUI = {
 // —— la previsión (tabla "ajustes", clave "prevision") ——
 
 export type AjustesPrevision = {
+  /** Segundos que dura la cuenta regresiva de cada visita (213 = 3:33). */
+  duracionCiclo: number;
   /** Segundos que se ve cada foto (los videos duran lo que duran). */
   duracionFoto: number;
 };

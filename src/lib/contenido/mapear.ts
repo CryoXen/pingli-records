@@ -140,11 +140,18 @@ export function musicaUI(a: AjustesMusica, url: UrlPublica): MusicaUI {
 // —— previsión ——
 
 export const DURACION_FOTO = { min: 3, max: 60 } as const;
+/** La cuenta regresiva: de 10 s a 59:59. */
+export const DURACION_CICLO = { min: 10, max: 59 * 60 + 59 } as const;
+
+const entre = (v: unknown, r: { min: number; max: number }, otro: number) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.min(r.max, Math.max(r.min, n)) : otro;
+};
 
 export function completarPrevision(a: Partial<AjustesPrevision> | null | undefined): AjustesPrevision {
-  const d = Number(a?.duracionFoto);
   return {
-    duracionFoto: Number.isFinite(d) ? Math.min(DURACION_FOTO.max, Math.max(DURACION_FOTO.min, d)) : site.cycle.hold,
+    duracionCiclo: entre(a?.duracionCiclo, DURACION_CICLO, site.cycle.duration),
+    duracionFoto: entre(a?.duracionFoto, DURACION_FOTO, site.cycle.hold),
   };
 }
 
