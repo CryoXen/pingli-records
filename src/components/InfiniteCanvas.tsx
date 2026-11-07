@@ -154,7 +154,7 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       <Releases releases={contenido.releases} layerRef={layerRef} engineRef={engineRef} />
       <div className="phrase-layer" ref={phraseRef} aria-hidden="true" />
       <Overlay hud={{ x: hx, y: hy, z: hz }} />
-      <AudioGate sonidos={contenido.sonidos} />
+      <AudioGate sonidos={contenido.sonidos} musica={contenido.musica} />
       <ReleasePanel releases={contenido.releases} />
     </main>
   );

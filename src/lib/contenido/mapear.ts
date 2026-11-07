@@ -3,7 +3,22 @@
  */
 import type { Cartel } from "@/config/carteles";
 import { site, type Release } from "@/config/site";
-import type { AjustesSonidos, Contenido, FilaFrase, FilaLanzamiento, FilaPrevision, Mundo, SonidoUI, SonidosUI, TipoSonido } from "./tipos";
+import type {
+  AjustesMusica,
+  AjustesPrevision,
+  AjustesSonidos,
+  CancionFondo,
+  Contenido,
+  FilaFrase,
+  FilaLanzamiento,
+  FilaPrevision,
+  Mundo,
+  MusicaUI,
+  PistaUI,
+  SonidoUI,
+  SonidosUI,
+  TipoSonido,
+} from "./tipos";
 
 /** URL pública de un archivo guardado en una carpeta ("portadas", "previsiones" o "sonidos"). */
 export type UrlPublica = (carpeta: "portadas" | "previsiones" | "sonidos", ruta: string) => string;
@@ -48,6 +63,91 @@ export function sonidosUI(a: AjustesSonidos, url: UrlPublica): SonidosUI {
   };
 }
 
+// —— música ——
+
+/** Mundo del admin → lado del motor de audio. */
+const LADO = { claro: "light", oscuro: "dark" } as const;
+
+/** La canción original de un mundo, como viene en site.ts. */
+export function cancionOriginal(m: Mundo): CancionFondo {
+  const t = site.audio.tracks[LADO[m]];
+  return {
+    id: "original",
+    ruta: null,
+    nombre: t.title,
+    gainDb: t.gainDb,
+    auto: t.gainDb,
+    inicio: 0,
+    fin: site.audio.loop.trimEnd,
+    duracion: null,
+  };
+}
+
+/** La canción final original (site.cycle.song). */
+export function finalOriginal(): AjustesMusica["final"] {
+  const s = site.cycle.song;
+  return { ruta: null, nombre: null, activo: !!s, gainDb: s?.gainDb ?? 0, auto: s?.gainDb ?? 0, inicio: 0, duracion: null };
+}
+
+export function musicaPorDefecto(): AjustesMusica {
+  return {
+    fondo: {
+      claro: { activa: "original", canciones: [cancionOriginal("claro")] },
+      oscuro: { activa: "original", canciones: [cancionOriginal("oscuro")] },
+    },
+    final: finalOriginal(),
+  };
+}
+
+/** Completa lo que falte con lo de site.ts; la original siempre está en la lista. */
+export function completarMusica(a: Partial<AjustesMusica> | null | undefined): AjustesMusica {
+  const base = musicaPorDefecto();
+  if (!a) return base;
+  const fondo = { ...base.fondo };
+  for (const m of MUNDOS) {
+    const f = a.fondo?.[m];
+    if (!f) continue;
+    const lista = Array.isArray(f.canciones) ? f.canciones.filter((c) => c && typeof c.id === "string") : [];
+    const original = lista.find((c) => c.id === "original");
+    const canciones = [{ ...cancionOriginal(m), ...(original ?? {}), ruta: null }, ...lista.filter((c) => c.id !== "original")];
+    const activa = f.activa === null ? null : canciones.some((c) => c.id === f.activa) ? (f.activa as string) : "original";
+    fondo[m] = { activa, canciones };
+  }
+  return { fondo, final: { ...base.final, ...(a.final ?? {}) } };
+}
+
+/** De lo que guarda el admin a lo que suena en el sitio. */
+export function musicaUI(a: AjustesMusica, url: UrlPublica): MusicaUI {
+  const pista = (m: Mundo): PistaUI | null => {
+    const f = a.fondo[m];
+    const c = f.canciones.find((x) => x.id === f.activa);
+    if (!c) return null;
+    const src = c.ruta ? url("sonidos", c.ruta) : site.audio.tracks[LADO[m]].src;
+    return { src, title: c.nombre, gainDb: c.gainDb, inicio: c.inicio, fin: c.fin };
+  };
+  const f = a.final;
+  const original = site.cycle.song;
+  const final = !f.activo
+    ? null
+    : f.ruta
+      ? { src: url("sonidos", f.ruta), gainDb: f.gainDb, inicio: f.inicio }
+      : original
+        ? { src: original.src, gainDb: f.gainDb, inicio: 0 }
+        : null;
+  return { fondo: { claro: pista("claro"), oscuro: pista("oscuro") }, final };
+}
+
+// —— previsión ——
+
+export const DURACION_FOTO = { min: 3, max: 60 } as const;
+
+export function completarPrevision(a: Partial<AjustesPrevision> | null | undefined): AjustesPrevision {
+  const d = Number(a?.duracionFoto);
+  return {
+    duracionFoto: Number.isFinite(d) ? Math.min(DURACION_FOTO.max, Math.max(DURACION_FOTO.min, d)) : site.cycle.hold,
+  };
+}
+
 /** "mw52s1nnuyj9-glitch-1.png" → "glitch-1.png" (las rutas llevan un id al frente para no repetirse). */
 export const nombreDeRuta = (ruta: string) => ruta.split("/").pop()!.replace(/^[0-9a-z]{10,14}-(?=.+\.)/, "");
 
@@ -82,7 +182,11 @@ export function filasAContenido(
   lanzamientos: readonly FilaLanzamiento[],
   previsiones: readonly FilaPrevision[],
   url: UrlPublica,
-  sonidos: Partial<AjustesSonidos> | null = null,
+  ajustes: {
+    sonidos?: Partial<AjustesSonidos> | null;
+    musica?: Partial<AjustesMusica> | null;
+    prevision?: Partial<AjustesPrevision> | null;
+  } = {},
 ): Contenido {
   const orden = <T extends { orden: number }>(a: readonly T[]) => [...a].sort((x, y) => x.orden - y.orden);
   const fs = orden(frases);
@@ -98,7 +202,16 @@ export function filasAContenido(
     frases: { claro: claroF, oscuro: oscuroF },
     previsiones: previsiones
       .filter((p) => p.activo)
-      .map((p) => ({ src: url("previsiones", p.ruta), tipo: p.tipo, rareza: p.rareza, nombre: p.nombre ?? nombreDeRuta(p.ruta) })),
-    sonidos: sonidosUI(completarSonidos(sonidos), url),
+      .map((p) => ({
+        src: url("previsiones", p.ruta),
+        tipo: p.tipo,
+        rareza: p.rareza,
+        nombre: p.nombre ?? nombreDeRuta(p.ruta),
+        medio: p.medio === "video" ? "video" : "imagen",
+        ...(p.medio === "video" ? { duracion: p.duracion ?? undefined, ganancia: p.ganancia ?? 0 } : {}),
+      })),
+    sonidos: sonidosUI(completarSonidos(ajustes.sonidos), url),
+    musica: musicaUI(completarMusica(ajustes.musica), url),
+    prevision: completarPrevision(ajustes.prevision),
   };
 }

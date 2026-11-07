@@ -90,6 +90,13 @@ export const supabaseStore: AdminStore = {
   async guardarSonidos(a) {
     await hecho(sb().from("ajustes").upsert({ clave: "sonidos", valor: a }));
   },
+  async ajuste<T>(clave: string) {
+    const fila = await hecho(sb().from("ajustes").select("valor").eq("clave", clave).maybeSingle());
+    return ((fila as { valor?: Partial<T> } | null)?.valor ?? null) as Partial<T> | null;
+  },
+  async guardarAjuste(clave, valor) {
+    await hecho(sb().from("ajustes").upsert({ clave, valor }));
+  },
 
   async subir(carpeta: Carpeta, archivo, ruta) {
     await hecho(sb().storage.from(carpeta).upload(ruta, archivo, { contentType: archivo.type || undefined, cacheControl: "31536000", upsert: false }));

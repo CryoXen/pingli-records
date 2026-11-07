@@ -5,6 +5,7 @@
 import type { AjustesSonidos, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
 
 export type Carpeta = "portadas" | "previsiones" | "sonidos";
+export type ClaveAjuste = "musica" | "prevision";
 
 export interface AdminStore {
   /** Aviso fijo arriba del panel (la vista previa dice que guarda solo en el navegador). */
@@ -37,6 +38,14 @@ export interface AdminStore {
   /** Los sonidos de la interfaz (null = nunca se han tocado: los de site.ts). */
   sonidos(): Promise<Partial<AjustesSonidos> | null>;
   guardarSonidos(a: AjustesSonidos): Promise<void>;
+
+  /**
+   * Un ajuste del sitio (tabla "ajustes"): "musica" (canciones de fondo y
+   * canción final) o "prevision" (cuánto se ve cada foto). null = nunca se
+   * ha tocado: lo de site.ts.
+   */
+  ajuste<T>(clave: ClaveAjuste): Promise<Partial<T> | null>;
+  guardarAjuste<T>(clave: ClaveAjuste, valor: T): Promise<void>;
 
   /** Sube un archivo y devuelve su ruta dentro de la carpeta. */
   subir(carpeta: Carpeta, archivo: File, ruta: string): Promise<string>;

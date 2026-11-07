@@ -18,6 +18,9 @@
  * El lado se lee del atributo data-side de <html>, así que el motor no
  * necesita saber nada del lienzo: cuando el sitio cambia de lado, la música
  * lo sigue sola.
+ *
+ * Qué canción suena en cada mundo se elige en el admin (pestaña "música");
+ * un mundo también puede quedar en silencio (pista null).
  */
 
 export type Side = "light" | "dark";
@@ -27,11 +30,18 @@ export type AudioTrack = {
   readonly title: string;
   /** Ajuste de nivel en dB, para que las pistas suenen igual de fuerte. */
   readonly gainDb: number;
+  /** Segundos de silencio al inicio que el loop se salta (0 si no se dice). */
+  readonly inicio?: number;
+  /** Segundos de silencio al final que se ignoran (si no se dice, loop.trimEnd). */
+  readonly fin?: number;
 };
+
+/** La pista de cada lado; null = ese lado queda en silencio. */
+export type Pistas = { readonly light: AudioTrack | null; readonly dark: AudioTrack | null };
 
 export type AudioSettings = {
   readonly enabled: boolean;
-  readonly tracks: { readonly light: AudioTrack; readonly dark: AudioTrack };
+  readonly tracks: Pistas;
   /** Volumen inicial del deslizador, 0–1. Después se recuerda por visitante. */
   readonly volume: number;
   /** Segundos del fade de entrada. */
@@ -158,11 +168,28 @@ class Track {
     return { el };
   }
 
+  /** Dónde empieza cada vuelta (se salta el silencio del inicio). */
+  private get start() {
+    return Math.max(0, this.cfg.inicio ?? 0);
+  }
+
+  /** Silencio del final que se ignora. */
+  private get trimEnd() {
+    return Math.max(0, this.cfg.fin ?? this.loop.trimEnd);
+  }
+
   /** Empieza a descargar la voz que va a sonar. */
   warm() {
     const el = this.voices[this.active].el;
     el.preload = "auto";
     if (el.readyState === 0) el.load();
+    if (this.start > 0 && el.currentTime < this.start) {
+      try {
+        el.currentTime = this.start;
+      } catch {
+        /* todavía sin datos: se ajusta al sonar */
+      }
+    }
   }
 
   connect(ctx: AudioContext, dest: AudioNode) {
@@ -193,7 +220,7 @@ class Track {
         () => {
           if (this.wanted && v === this.voices[this.active]) return;
           v.el.pause();
-          v.el.currentTime = 0;
+          v.el.currentTime = this.start;
         },
         () => {},
       );
@@ -207,6 +234,13 @@ class Track {
     this.timer = window.setInterval(() => this.tick(), 250);
     const el = this.voices[this.active].el;
     if (el.preload !== "auto") el.preload = "auto";
+    if (this.start > 0 && el.currentTime < this.start) {
+      try {
+        el.currentTime = this.start;
+      } catch {
+        /* sin datos todavía */
+      }
+    }
     try {
       await el.play();
     } catch {
@@ -221,7 +255,7 @@ class Track {
     if (this.ctx && this.turning) {
       // si se pausó a media vuelta, queda solo la voz nueva
       this.voices.forEach((v, i) => glide(this.ctx!, v.gain!.gain, i === this.active ? 1 : 0, 0));
-      this.voices[1 - this.active].el.currentTime = 0;
+      this.voices[1 - this.active].el.currentTime = this.start;
       this.turning = false;
       this.primed = false;
     }
@@ -230,14 +264,14 @@ class Track {
   private tick() {
     const el = this.voices[this.active].el;
     const d = el.duration;
-    if (!Number.isFinite(d) || d <= this.loop.overlap + this.loop.trimEnd + 1) return;
-    const turnAt = d - this.loop.trimEnd - this.loop.overlap;
+    if (!Number.isFinite(d) || d <= this.start + this.loop.overlap + this.trimEnd + 1) return;
+    const turnAt = d - this.trimEnd - this.loop.overlap;
     if (!this.primed && el.currentTime >= turnAt - 20) {
       // la siguiente vuelta se prepara 20 s antes, para que arranque al instante
       const next = this.voices[1 - this.active].el;
       next.preload = "auto";
       if (next.readyState === 0) next.load();
-      next.currentTime = 0;
+      next.currentTime = this.start;
       this.primed = true;
     }
     if (!this.turning && el.currentTime >= turnAt) this.turn();
@@ -252,7 +286,7 @@ class Track {
     const next = this.voices[1 - this.active];
     const { overlap, rise } = this.loop;
     glide(ctx, next.gain!.gain, 0, 0);
-    next.el.currentTime = 0;
+    next.el.currentTime = this.start;
     this.active = 1 - this.active;
     const cross = () => {
       if (!this.wanted) return;
@@ -286,7 +320,7 @@ export class Ambient {
   private ctx?: AudioContext;
   private master?: GainNode;
   private bus?: GainNode;
-  private readonly tracks: Record<Side, Track>;
+  private tracks: Record<Side, Track | null>;
   private side: Side = "light";
   private started = false;
   private mixId = 0;
@@ -298,10 +332,7 @@ export class Ambient {
   private shots = new Map<string, { node: AudioBufferSourceNode; gain: GainNode }>();
 
   constructor(private readonly s: AudioSettings) {
-    this.tracks = {
-      light: new Track(s.tracks.light, s.loop),
-      dark: new Track(s.tracks.dark, s.loop),
-    };
+    this.tracks = this.crear(s.tracks);
     let saved: number | null = null;
     try {
       const raw = localStorage.getItem(VOLUME_KEY);
@@ -316,10 +347,32 @@ export class Ambient {
     return this.started;
   }
 
+  private crear(p: Pistas): Record<Side, Track | null> {
+    return {
+      light: p.light ? new Track(p.light, this.s.loop) : null,
+      dark: p.dark ? new Track(p.dark, this.s.loop) : null,
+    };
+  }
+
+  /** Las pistas presentes (los lados en silencio no tienen). */
+  private get presentes(): Track[] {
+    return Object.values(this.tracks).filter((t): t is Track => !!t);
+  }
+
+  /**
+   * Cambia la canción de cada lado (la que se eligió en el admin). Solo antes
+   * de entrar: después, la música ya está sonando.
+   */
+  useTracks(p: Pistas) {
+    if (this.started) return;
+    for (const t of this.presentes) t.destroy();
+    this.tracks = this.crear(p);
+  }
+
   /** Antes de entrar: descarga la pista del lado en el que está el visitante. */
   warm() {
     if (!this.s.enabled) return;
-    this.tracks[currentSide()].warm();
+    this.tracks[currentSide()]?.warm();
   }
 
   /** Llamar dentro del clic o tecla de "entrar": los navegadores lo exigen. */
@@ -344,17 +397,17 @@ export class Ambient {
 
     this.side = currentSide();
     const first = this.tracks[this.side];
-    for (const t of Object.values(this.tracks)) t.connect(ctx, this.bus);
-    glide(ctx, first.out!.gain, first.level, 0);
+    for (const t of this.presentes) t.connect(ctx, this.bus);
+    if (first) glide(ctx, first.out!.gain, first.level, 0);
     void ctx.resume();
 
     // play() tiene que llamarse aquí mismo, dentro del gesto
-    const playing = first.play();
-    if (needsBless()) for (const t of Object.values(this.tracks)) t.bless();
+    const playing = first ? first.play() : Promise.resolve();
+    if (needsBless()) for (const t of this.presentes) t.bless();
     playing.then(() => {
       glide(ctx, this.bus!.gain, 1, this.s.fadeIn, "swell");
       // la otra pista se descarga cuando la primera ya suena
-      setTimeout(() => this.tracks[other(this.side)].warm(), 4000);
+      setTimeout(() => this.tracks[other(this.side)]?.warm(), 4000);
     });
 
     this.observer = new MutationObserver(() => this.follow(currentSide()));
@@ -372,13 +425,14 @@ export class Ambient {
     const out = this.tracks[other(to)];
 
     // si la que llega estaba en silencio, empieza oscura
-    if (filter && valueNow(inc.out!.gain, ctx.currentTime) < 0.01) {
+    if (inc && filter && valueNow(inc.out!.gain, ctx.currentTime) < 0.01) {
       glide(ctx, inc.filter!.frequency, RISE_HZ, 0);
     }
-    const ready = inc.play();
+    // un lado sin canción: solo se va la otra
+    const ready = inc ? inc.play() : Promise.resolve();
 
     const leave = () => {
-      if (id !== this.mixId) return;
+      if (id !== this.mixId || !out) return;
       glide(ctx, out.out!.gain, 0, D);
       if (filter) glide(ctx, out.filter!.frequency, SUNK_HZ, D, "exp");
       setTimeout(() => {
@@ -386,13 +440,51 @@ export class Ambient {
       }, (D + 0.5) * 1000);
     };
     const arrive = () => {
-      if (id !== this.mixId) return;
+      if (id !== this.mixId || !inc) return;
       glide(ctx, inc.out!.gain, inc.level, D);
       if (filter) glide(ctx, inc.filter!.frequency, OPEN_HZ, D * 0.85, "exp");
     };
     // las dos empiezan juntas; si la nueva tarda en cargar, la vieja no la espera más de 1.5 s
     Promise.race([ready, wait(1500)]).then(leave);
     ready.then(arrive);
+  }
+
+  /**
+   * Decodifica audio ya descargado (el sonido de un video de la previsión).
+   * null si no se pudo (sin audio, sin pista de sonido, formato raro).
+   */
+  decodificar(data: ArrayBuffer): Promise<AudioBuffer | null> {
+    const ctx = this.ctx;
+    if (!ctx) return Promise.resolve(null);
+    return new Promise<AudioBuffer>((ok, fail) => ctx.decodeAudioData(data, ok, fail)).catch(() => null);
+  }
+
+  /** El reloj del audio (para sincronizar el sonido de un video). */
+  get ahora(): number {
+    return this.ctx?.currentTime ?? 0;
+  }
+
+  /** La música de fondo se corta casi de golpe (como aparece la previsión) y se detiene. */
+  silenciar(cut = 0.15) {
+    const ctx = this.ctx;
+    if (!ctx || !this.bus) return;
+    this.mixId++; // cancela cualquier mezcla en curso
+    glide(ctx, this.bus.gain, 0, cut);
+    window.setTimeout(() => {
+      for (const t of this.presentes) t.pause();
+    }, cut * 1000 + 40);
+  }
+
+  /**
+   * Suena un audio ya decodificado aparte del loop (el sonido de un video),
+   * con el volumen del deslizador, desde `offset` segundos.
+   */
+  async sonar(clave: string, buffer: AudioBuffer, gainDb = 0, offset = 0): Promise<boolean> {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return false;
+    if (ctx.state !== "running") await ctx.resume().catch(() => {});
+    this.shoot(clave, buffer, gainDb, offset);
+    return true;
   }
 
   /**
@@ -484,18 +576,14 @@ export class Ambient {
    * aparece la imagen) y entra esta, con el mismo volumen del deslizador.
    * Devuelve false si no pudo sonar (sin audio, sin descargar, etc.).
    */
-  async playCue(src: string, gainDb = 0, cut = 0.15): Promise<boolean> {
+  async playCue(src: string, gainDb = 0, offset = 0, cut = 0.15): Promise<boolean> {
     const ctx = this.ctx;
     if (!ctx || !this.master || !this.bus) return false;
     const buffer = await this.loadCue(src);
     if (!buffer) return false;
     if (ctx.state !== "running") await ctx.resume().catch(() => {});
-    this.mixId++; // cancela cualquier mezcla en curso
-    glide(ctx, this.bus.gain, 0, cut);
-    window.setTimeout(() => {
-      for (const t of Object.values(this.tracks)) t.pause();
-    }, cut * 1000 + 40);
-    this.shoot(src, buffer, gainDb);
+    this.silenciar(cut);
+    this.shoot(src, buffer, gainDb, offset);
     return true;
   }
 
@@ -507,7 +595,7 @@ export class Ambient {
     glide(ctx, this.bus.gain, 0, fade);
     for (const shot of this.shots.values()) glide(ctx, shot.gain.gain, 0, fade);
     window.setTimeout(() => {
-      for (const t of Object.values(this.tracks)) t.pause();
+      for (const t of this.presentes) t.pause();
       void ctx.suspend();
     }, fade * 1000 + 40);
   }
@@ -530,7 +618,7 @@ export class Ambient {
 
   destroy() {
     this.observer?.disconnect();
-    for (const t of Object.values(this.tracks)) t.destroy();
+    for (const t of this.presentes) t.destroy();
     void this.ctx?.close();
   }
 }

@@ -49,6 +49,9 @@ export type FilaLanzamiento = {
   orden: number;
 };
 
+/** Una previsión es una foto o un video (MP4, hasta 30 s, con su sonido). */
+export type Medio = "imagen" | "video";
+
 export type FilaPrevision = {
   id: string;
   /** Ruta dentro de la carpeta "previsiones". */
@@ -59,6 +62,11 @@ export type FilaPrevision = {
   rareza: Rareza;
   activo: boolean;
   creado: string;
+  medio: Medio;
+  /** Segundos que dura (solo videos). */
+  duracion: number | null;
+  /** Nivelado automático del sonido del video, en dB (calculado al subirlo). */
+  ganancia: number;
 };
 
 // —— lo que usa el sitio ——
@@ -69,6 +77,12 @@ export type Prevision = {
   readonly rareza: Rareza;
   /** El nombre del archivo, que se ve debajo de la imagen. */
   readonly nombre?: string;
+  /** "imagen" si no se dice. */
+  readonly medio?: Medio;
+  /** Segundos (videos). */
+  readonly duracion?: number;
+  /** dB para el sonido del video. */
+  readonly ganancia?: number;
 };
 
 export type BancoDeFrases = {
@@ -108,10 +122,68 @@ export type SonidosUI = {
   readonly frase: Readonly<Record<Mundo, SonidoUI | null>>;
 };
 
+// —— música (tabla "ajustes", clave "musica") ——
+
+/** Una canción de fondo de un mundo. */
+export type CancionFondo = {
+  /** "original" = la que trae el sitio (no se puede borrar). */
+  id: string;
+  /** Ruta en la carpeta "sonidos"; null = el archivo original del sitio. */
+  ruta: string | null;
+  nombre: string;
+  /** Volumen en dB (empieza en el nivelado automático y se puede mover). */
+  gainDb: number;
+  /** El nivelado automático, para poder regresar a él. */
+  auto: number;
+  /** Silencio al inicio y al final, en segundos (el loop los salta). */
+  inicio: number;
+  fin: number;
+  /** Segundos que dura, para mostrarlo en el admin. */
+  duracion: number | null;
+};
+
+export type AjustesMusica = {
+  /** Por mundo: la lista y cuál suena (null = silencio en ese mundo). */
+  fondo: Record<Mundo, { activa: string | null; canciones: CancionFondo[] }>;
+  /** La canción final del contador: suena mientras se ve una foto de la previsión. */
+  final: {
+    ruta: string | null;
+    nombre: string | null;
+    /** false = no suena: sigue la música de fondo. */
+    activo: boolean;
+    gainDb: number;
+    auto: number;
+    inicio: number;
+    duracion: number | null;
+  };
+};
+
+/** Lo que usa el sitio. */
+export type PistaUI = {
+  readonly src: string;
+  readonly title: string;
+  readonly gainDb: number;
+  readonly inicio: number;
+  readonly fin: number;
+};
+export type MusicaUI = {
+  readonly fondo: Readonly<Record<Mundo, PistaUI | null>>;
+  readonly final: { readonly src: string; readonly gainDb: number; readonly inicio: number } | null;
+};
+
+// —— la previsión (tabla "ajustes", clave "prevision") ——
+
+export type AjustesPrevision = {
+  /** Segundos que se ve cada foto (los videos duran lo que duran). */
+  duracionFoto: number;
+};
+
 export type Contenido = {
   readonly releases: readonly Release[];
   readonly carteles: BancoDeCarteles;
   readonly frases: BancoDeFrases;
   readonly previsiones: readonly Prevision[];
   readonly sonidos: SonidosUI;
+  readonly musica: MusicaUI;
+  readonly prevision: AjustesPrevision;
 };

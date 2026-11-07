@@ -10,8 +10,10 @@
     "preview:build": "node preview/build.mjs"
   },
   "dependencies": {
+    "@mediabunny/aac-encoder": "1.62.1",
     "@supabase/supabase-js": "^2.119.0",
     "gsap": "^3.15.1",
+    "mediabunny": "1.62.1",
     "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

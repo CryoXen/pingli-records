@@ -23,6 +23,7 @@ Variables. Sin ellas el sitio funciona igual con lo de `src/config` y
 
 - `supabase/schema.sql`: tablas, permisos (RLS) y carpetas públicas
   (`portadas`, `previsiones`, `sonidos`). Se puede volver a correr.
+- Ajustes en la tabla `ajustes`: `sonidos`, `musica` y `prevision` (JSON).
 - `supabase/seed.sql`: el contenido inicial (120 carteles, 180 frases,
   7 lanzamientos). `scripts/seed.mjs` lo rehace desde `src/config`.
 - Un admin = un usuario de Supabase Auth con su `user_id` en `public.admins`.
@@ -31,8 +32,11 @@ Variables. Sin ellas el sitio funciona igual con lo de `src/config` y
 
 `/admin`, o mantener presionada la cuenta 3:33 (abajo a la derecha) 3.33 s.
 Frases por mundo, lanzamientos (foto, información, etiquetas, enlaces,
-posición), previsiones (tipo y rareza) y sonidos de la interfaz (volumen
-global). Al guardar, la portada se rehace en segundos; además se revisa sola
+posición), previsiones (fotos y videos de hasta 30 s, tipo y rareza, cuánto
+se ve cada foto), música (varias canciones de fondo por mundo y cuál suena;
+la canción final del contador) y sonidos de la interfaz (volumen global).
+Los videos largos se recortan al fragmento elegido y se convierten a MP4
+ligero en el navegador (mediabunny + WebCodecs) antes de subirse. Al guardar, la portada se rehace en segundos; además se revisa sola
 cada 5 minutos.
 
 ## Arrancar

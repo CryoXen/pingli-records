@@ -8,6 +8,11 @@
 
 /** Nivel al que quedan todos los sonidos de la interfaz (igual que los originales). */
 export const LUFS_OBJETIVO = -16;
+/**
+ * Nivel de la música (fondo, canción final y el sonido de los videos): el de
+ * "003 Piaga", la canción original del lado claro (−11.2 LUFS, sin ajuste).
+ */
+export const LUFS_MUSICA = -11.2;
 /** Lo que se considera silencio al inicio. */
 const UMBRAL_DB = -55;
 
@@ -16,6 +21,8 @@ export type Analisis = {
   duracion: number;
   /** Segundos de silencio al inicio. */
   inicio: number;
+  /** Segundos de silencio al final. */
+  fin: number;
   /** Sonoridad medida. */
   lufs: number;
   /** Pico, en dBFS. */
@@ -24,7 +31,7 @@ export type Analisis = {
   gainDb: number;
 };
 
-export async function analizarSonido(data: ArrayBuffer): Promise<Analisis> {
+export async function analizarSonido(data: ArrayBuffer, objetivo = LUFS_OBJETIVO): Promise<Analisis> {
   const tmp = new OfflineAudioContext(1, 1, 44100);
   const buf = await new Promise<AudioBuffer>((ok, mal) => tmp.decodeAudioData(data.slice(0), ok, mal));
   const ch = Array.from({ length: buf.numberOfChannels }, (_, i) => buf.getChannelData(i));
@@ -41,6 +48,12 @@ export async function analizarSonido(data: ArrayBuffer): Promise<Analisis> {
     }
   }
   const inicio = primero < 0 ? 0 : Math.max(0, primero / buf.sampleRate - 0.005);
+  // y dónde termina (el silencio del final se ignora en los loops)
+  let ultimo = -1;
+  for (let i = buf.length - 1; i >= 0 && ultimo < 0; i--) {
+    for (const c of ch) if (Math.abs(c[i]) > umbral) ultimo = i;
+  }
+  const fin = ultimo < 0 ? 0 : Math.max(0, (buf.length - 1 - ultimo) / buf.sampleRate - 0.05);
 
   // filtro K: un estante de +4 dB en los agudos y un pasa-altos en 38 Hz
   const off = new OfflineAudioContext(buf.numberOfChannels, buf.length, buf.sampleRate);
@@ -85,8 +98,8 @@ export async function analizarSonido(data: ArrayBuffer): Promise<Analisis> {
   }
 
   const picoDb = pico > 0 ? 20 * Math.log10(pico) : -Infinity;
-  let gainDb = LUFS_OBJETIVO - lufs;
+  let gainDb = objetivo - lufs;
   if (Number.isFinite(picoDb)) gainDb = Math.min(gainDb, -1 - picoDb); // sin saturar
   gainDb = Math.max(-24, Math.min(24, gainDb));
-  return { duracion: buf.duration, inicio, lufs, picoDb, gainDb: Math.round(gainDb * 10) / 10 };
+  return { duracion: buf.duration, inicio, fin, lufs, picoDb, gainDb: Math.round(gainDb * 10) / 10 };
 }

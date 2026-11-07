@@ -4,6 +4,8 @@
  * recarga en desarrollo), así que basta con poner o quitar imágenes de la
  * carpeta y volver a construir.
  *
+ * También videos (.mp4, .webm): duran lo que duran (hasta 30 s) y suenan.
+ *
  * Una subcarpeta es un tipo: public/previsiones/glitch/a.jpg tiene tipo
  * "glitch" (para no mostrar dos del mismo tipo seguidas). Todas son comunes;
  * la rareza se pone en el panel de admin.
@@ -13,6 +15,7 @@ import path from "node:path";
 import type { Prevision } from "@/lib/contenido/tipos";
 
 const IMAGE = /\.(jpe?g|png|gif|webp|avif)$/i;
+const VIDEO = /\.(mp4|m4v|webm)$/i;
 
 export function listPrevisiones(folder = "previsiones"): Prevision[] {
   const dir = path.join(process.cwd(), "public", folder);
@@ -27,9 +30,10 @@ export function listPrevisiones(folder = "previsiones"): Prevision[] {
     for (const d of names.sort((a, b) => a.name.localeCompare(b.name))) {
       if (d.name.startsWith(".")) continue;
       if (d.isDirectory() && !sub) read(d.name);
-      else if (d.isFile() && IMAGE.test(d.name)) {
+      else if (d.isFile() && (IMAGE.test(d.name) || VIDEO.test(d.name))) {
         const rel = sub ? `${encodeURIComponent(sub)}/${encodeURIComponent(d.name)}` : encodeURIComponent(d.name);
-        out.push({ src: `/${folder}/${rel}`, tipo: sub, rareza: "comun", nombre: d.name });
+        const medio = VIDEO.test(d.name) ? "video" : "imagen";
+        out.push({ src: `/${folder}/${rel}`, tipo: sub, rareza: "comun", nombre: d.name, medio });
       }
     }
   };

@@ -3,7 +3,7 @@ import InfiniteCanvas from "@/components/InfiniteCanvas";
 import { getContenido } from "@/lib/contenido/servidor";
 
 /**
- * La portada. El contenido (lanzamientos, frases, previsiones) viene de
+ * La portada. El contenido (lanzamientos, frases, previsiones, música) viene de
  * Supabase; el panel de admin pide rehacer la página al guardar, y además se
  * revisa sola cada 5 minutos.
  */
@@ -14,7 +14,7 @@ export default async function Home() {
   return (
     <>
       <InfiniteCanvas contenido={contenido} />
-      <Ciclo images={contenido.previsiones} />
+      <Ciclo images={contenido.previsiones} final={contenido.musica.final} prevision={contenido.prevision} />
     </>
   );
 }

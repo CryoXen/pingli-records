@@ -2,7 +2,7 @@
 
 /**
  * El panel de admin de pingli records: entrar, y después frases,
- * lanzamientos y previsiones. Funciona con cualquier AdminStore (Supabase en
+ * lanzamientos, previsiones, música y sonidos. Funciona con cualquier AdminStore (Supabase en
  * el sitio, el navegador en la vista previa).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,11 +11,12 @@ import type { AdminStore } from "@/lib/admin/store";
 import type { FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
 import { Frases } from "./Frases";
 import { Lanzamientos } from "./Lanzamientos";
+import { Musica } from "./Musica";
 import { Previsiones } from "./Previsiones";
 import { Sonidos } from "./Sonidos";
 
-type Pestana = "frases" | "lanzamientos" | "previsiones" | "sonidos";
-const PESTANAS: readonly Pestana[] = ["frases", "lanzamientos", "previsiones", "sonidos"];
+type Pestana = "frases" | "lanzamientos" | "previsiones" | "música" | "sonidos";
+const PESTANAS: readonly Pestana[] = ["frases", "lanzamientos", "previsiones", "música", "sonidos"];
 const PESTANA_KEY = "pingli:admin:pestana";
 
 type Fase = { tipo: "cargando" } | { tipo: "entrar" } | { tipo: "sin-permiso"; email: string } | { tipo: "dentro"; email: string } | { tipo: "error"; msg: string };
@@ -189,6 +190,7 @@ function Panel({ store, email, onSalir }: { store: AdminStore; email: string; on
         {cargado && pestana === "previsiones" ? (
           <Previsiones store={store} filas={previsiones} setFilas={(f) => setPrevisiones((p) => f(p ?? []))} avisar={avisar} />
         ) : null}
+        {cargado && pestana === "música" ? <Musica store={store} avisar={avisar} /> : null}
         {cargado && pestana === "sonidos" ? <Sonidos store={store} avisar={avisar} /> : null}
       </main>
     </>

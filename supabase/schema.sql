@@ -3,10 +3,12 @@
 -- Córrelo una vez en Supabase → SQL Editor. Crea:
 --   frases        lo que brota del plano en cada mundo (carteles y frases)
 --   lanzamientos  los cuadros del plano: foto, información, etiquetas, enlaces
---   previsiones   las imágenes del ciclo de 3:33, con su tipo y su rareza
---   ajustes       ajustes del sitio; hoy: los sonidos de la interfaz (clave "sonidos")
+--   previsiones   las fotos y videos del ciclo de 3:33, con su tipo y su rareza
+--   ajustes       ajustes del sitio: "sonidos" (interfaz), "musica" (fondo y
+--                 canción final) y "prevision" (cuánto se ve cada foto)
 --   admins        quién puede editar (usuarios de Supabase Auth)
--- y tres carpetas públicas: "portadas" y "previsiones" (imágenes) y "sonidos".
+-- y tres carpetas públicas: "portadas" y "previsiones" (imágenes y videos) y
+-- "sonidos" (sonidos de la interfaz y canciones).
 --
 -- Se puede volver a correr cuando cambie (no borra nada): así se agregan
 -- tablas o carpetas nuevas a una base que ya existe.
@@ -72,6 +74,13 @@ create table if not exists public.ajustes (
 
 -- (agregada en el paso 20: el nombre original del archivo, que se ve debajo de la imagen)
 alter table public.previsiones add column if not exists nombre text;
+-- (paso 22: también videos MP4 de hasta 30 s, con su duración y el nivelado de su sonido)
+alter table public.previsiones add column if not exists medio text not null default 'imagen';
+alter table public.previsiones add column if not exists duracion real;
+alter table public.previsiones add column if not exists ganancia real not null default 0;
+do $$ begin
+  alter table public.previsiones add constraint previsiones_medio check (medio in ('imagen', 'video'));
+exception when duplicate_object then null; end $$;
 
 create table if not exists public.admins (
   user_id uuid primary key references auth.users (id) on delete cascade

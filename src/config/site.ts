@@ -213,12 +213,17 @@ export const site = {
     enabled: true,
     /** Segundos que dura cada visita, igual en los dos mundos (213 = 3:33). */
     duration: 213,
-    /** Segundos que se ve la previsión. */
+    /**
+     * Segundos que se ve una foto de la previsión (los videos duran lo que
+     * duran, hasta 30 s). Con Supabase se cambia en el admin (previsiones).
+     */
     hold: 10,
     /**
-     * Canción de la previsión: suena mientras se ve la imagen y la música de
-     * fondo se corta. Es el final de "Tan" (los últimos 10 s, de 3:01 a 3:11),
-     * así que termina justo cuando todo se detiene. null = sigue la de fondo.
+     * Canción final: suena mientras se ve una foto de la previsión y la
+     * música de fondo se corta (con un video suena el video). Es el final de
+     * "Tan" (los últimos 10 s, de 3:01 a 3:11). null = sigue la de fondo.
+     * Con Supabase se cambia, se apaga y se le mueve el volumen en el admin
+     * (pestaña "música").
      */
     song: { src: "/audio/tan-final.mp3", gainDb: 0 } as { src: string; gainDb: number } | null,
     /** "contain": la imagen se ve completa; "cover": llena la pantalla y recorta. */
@@ -249,6 +254,10 @@ export const site = {
   audio: {
     /** false = sin música, sin pantalla de entrada y sin deslizador. */
     enabled: true,
+    /**
+     * Las canciones originales. Con Supabase, en el admin (pestaña "música")
+     * se suben otras y se elige cuál suena en cada mundo (o silencio).
+     */
     tracks: {
       /** Lado claro: suena al entrar. */
       light: { src: "/audio/piaga.mp3", title: "003 Piaga", gainDb: 0 },
