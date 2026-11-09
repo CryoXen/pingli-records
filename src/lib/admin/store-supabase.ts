@@ -3,7 +3,7 @@
  * tablas con permisos (solo los admins escriben) y las carpetas de imágenes.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { AjustesSonidos, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
+import type { AjustesSonidos, FilaArtista, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
 import type { AdminStore, Carpeta } from "./store";
 
 let cliente: SupabaseClient | null = null;
@@ -29,7 +29,7 @@ function mensaje(e: { message?: string } | null | undefined): string {
   return m.toLowerCase();
 }
 
-async function hecho<T>(p: PromiseLike<{ data: T; error: { message?: string } | null }>): Promise<T> {
+export async function hecho<T>(p: PromiseLike<{ data: T; error: { message?: string } | null }>): Promise<T> {
   const { data, error } = await p;
   if (error) throw new Error(mensaje(error));
   return data;
@@ -72,6 +72,22 @@ export const supabaseStore: AdminStore = {
   },
   async borrarLanzamiento(catalogo) {
     await hecho(sb().from("lanzamientos").delete().eq("catalogo", catalogo));
+  },
+
+  async artistas() {
+    return hecho(sb().from("artistas").select("id, nombre, foto, x, y, tamano").order("nombre")) as Promise<FilaArtista[]>;
+  },
+  async guardarArtista(f, antes) {
+    const cols = "id, nombre, foto, x, y, tamano";
+    const fila = (await hecho(
+      f.id
+        ? sb().from("artistas").update({ nombre: f.nombre, foto: f.foto }).eq("id", f.id).select(cols).single()
+        : sb().from("artistas").upsert({ nombre: f.nombre, foto: f.foto }, { onConflict: "nombre" }).select(cols).single(),
+    )) as FilaArtista;
+    // sus lanzamientos pasan al nombre nuevo
+    const otros = (antes ?? []).filter((n) => n !== f.nombre);
+    if (otros.length) await hecho(sb().from("lanzamientos").update({ artista: f.nombre }).in("artista", otros));
+    return fila;
   },
 
   async previsiones() {

@@ -2,21 +2,22 @@
 
 /**
  * El panel de admin de pingli records: entrar, y después frases,
- * lanzamientos, previsiones, música y sonidos. Funciona con cualquier AdminStore (Supabase en
+ * lanzamientos, artistas, previsiones, música y sonidos. Funciona con cualquier AdminStore (Supabase en
  * el sitio, el navegador en la vista previa).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "@/config/site";
 import type { AdminStore } from "@/lib/admin/store";
-import type { FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
+import type { FilaArtista, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
+import { Artistas } from "./Artistas";
 import { Frases } from "./Frases";
 import { Lanzamientos } from "./Lanzamientos";
 import { Musica } from "./Musica";
 import { Previsiones } from "./Previsiones";
 import { Sonidos } from "./Sonidos";
 
-type Pestana = "frases" | "lanzamientos" | "previsiones" | "música" | "sonidos";
-const PESTANAS: readonly Pestana[] = ["frases", "lanzamientos", "previsiones", "música", "sonidos"];
+type Pestana = "frases" | "lanzamientos" | "artistas" | "previsiones" | "música" | "sonidos";
+const PESTANAS: readonly Pestana[] = ["frases", "lanzamientos", "artistas", "previsiones", "música", "sonidos"];
 const PESTANA_KEY = "pingli:admin:pestana";
 
 type Fase = { tipo: "cargando" } | { tipo: "entrar" } | { tipo: "sin-permiso"; email: string } | { tipo: "dentro"; email: string } | { tipo: "error"; msg: string };
@@ -114,16 +115,18 @@ function Panel({ store, email, onSalir }: { store: AdminStore; email: string; on
   const [frases, setFrases] = useState<FilaFrase[] | null>(null);
   const [lanzamientos, setLanzamientos] = useState<FilaLanzamiento[] | null>(null);
   const [previsiones, setPrevisiones] = useState<FilaPrevision[] | null>(null);
+  const [artistas, setArtistas] = useState<FilaArtista[] | null>(null);
   const [error, setError] = useState("");
   const [pendiente, setPendiente] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    Promise.all([store.frases(), store.lanzamientos(), store.previsiones()]).then(
-      ([f, l, p]) => {
+    Promise.all([store.frases(), store.lanzamientos(), store.previsiones(), store.artistas()]).then(
+      ([f, l, p, a]) => {
         setFrases(f);
         setLanzamientos(l);
         setPrevisiones(p);
+        setArtistas(a);
       },
       (e) => setError(e instanceof Error ? e.message : String(e)),
     );
@@ -147,7 +150,7 @@ function Panel({ store, email, onSalir }: { store: AdminStore; email: string; on
   }, [store]);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const cargado = frases && lanzamientos && previsiones;
+  const cargado = frases && lanzamientos && previsiones && artistas;
   return (
     <>
       <header className="adm-arriba">
@@ -186,6 +189,16 @@ function Panel({ store, email, onSalir }: { store: AdminStore; email: string; on
         ) : null}
         {cargado && pestana === "lanzamientos" ? (
           <Lanzamientos store={store} filas={lanzamientos} setFilas={(f) => setLanzamientos((p) => f(p ?? []))} avisar={avisar} />
+        ) : null}
+        {cargado && pestana === "artistas" ? (
+          <Artistas
+            store={store}
+            filas={artistas}
+            setFilas={(f) => setArtistas((p) => f(p ?? []))}
+            lanzamientos={lanzamientos}
+            setLanzamientos={(f) => setLanzamientos((p) => f(p ?? []))}
+            avisar={avisar}
+          />
         ) : null}
         {cargado && pestana === "previsiones" ? (
           <Previsiones store={store} filas={previsiones} setFilas={(f) => setPrevisiones((p) => f(p ?? []))} avisar={avisar} />

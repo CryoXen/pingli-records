@@ -15,7 +15,8 @@
 import { type Cam, type Estado, type PlanoArtistas } from "@/lib/artistas";
 
 export type CambioAjuste = {
-  artista: { id: string; x: number; y: number; size: number };
+  /** El artista se guarda por nombre (así se relaciona con sus lanzamientos). */
+  artista: { id: string; nombre: string; x: number; y: number; size: number };
   proyectos: { catalog: string; size: number; offset: { x: number; y: number } | null }[];
 };
 
@@ -25,6 +26,14 @@ let guardarCon: Guardar | null = null;
 /** Dónde se guardan los ajustes (Supabase en el sitio; el navegador en la vista previa). */
 export function definirGuardado(f: Guardar | null) {
   guardarCon = f;
+}
+
+/** Sin otro definido, Supabase (se descarga solo al guardar). */
+async function guardador(): Promise<Guardar> {
+  if (guardarCon) return guardarCon;
+  const { guardarAjusteSupabase } = await import("@/lib/admin/ajuste-supabase");
+  guardarCon = guardarAjusteSupabase;
+  return guardarCon;
 }
 
 const LADO_MIN = 24;
@@ -277,18 +286,13 @@ export function mountAjuste(o: PlanoArtistas): () => void {
     const e = actual();
     if (!e) return;
     const cambio: CambioAjuste = {
-      artista: { id: e.a.id, x: Math.round(e.x), y: Math.round(e.y), size: Math.round(e.size) },
+      artista: { id: e.a.id, nombre: e.a.name, x: Math.round(e.x), y: Math.round(e.y), size: Math.round(e.size) },
       proyectos: e.proyectos.map((j) => ({ catalog: io.releases[j].catalog, size: io.releases[j].size, offset: io.releases[j].offset ?? null })),
     };
-    if (!guardarCon) {
-      estado = "no se pudo guardar: falta dónde guardar";
-      pintar();
-      return;
-    }
     estado = "guardando…";
     pintar();
     try {
-      await guardarCon(cambio);
+      await (await guardador())(cambio);
       estado = "guardado";
       terminar();
     } catch (err) {

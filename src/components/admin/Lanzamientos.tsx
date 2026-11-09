@@ -261,7 +261,7 @@ function Formulario({ store, inicial, esNuevo, etiquetas, catalogos, onGuardado,
           </label>
         ))}
         <fieldset className="adm-campo adm-completo adm-posicion">
-          <legend>en el plano — como las coordenadas de arriba a la derecha del sitio</legend>
+          <legend>en el plano — x / y solo cuentan si no tiene artista (con artista, se acomoda alrededor de él con «editar» en el sitio)</legend>
           <label>
             x <Numero label="x" value={b.x} onChange={(x) => set({ x })} />
           </label>

@@ -21,8 +21,10 @@ export type Release = {
   /** El nombre del artista tal como se lee en el panel. */
   artist?: string;
   /**
-   * A qué artista del plano pertenece (su `id` en `artists`). El proyecto
-   * solo aparece alrededor de ese artista, al activarlo.
+   * A qué artista del plano pertenece (su `id`). Lo pone
+   * src/lib/contenido/artistas.ts según el nombre en `artist`. El proyecto
+   * solo aparece alrededor de ese artista, al activarlo; sin artista queda
+   * suelto en el plano, en su x / y.
    */
   artistId?: string;
   /** Año de publicación. */
@@ -39,7 +41,7 @@ export type Release = {
   links?: Partial<Record<StoreId, string>>;
   /** Foto del lanzamiento (URL). Sin foto, el cuadro queda vacío con su nombre de archivo. */
   image?: string;
-  /** Posición en el mundo (unidades del lienzo; el objeto ASCII está en 0,0). */
+  /** Posición en el mundo (unidades del lienzo; el objeto ASCII está en 0,0). Solo si no tiene artista. */
   x: number;
   y: number;
   /** Lado del marco en unidades del mundo. Valores muy pequeños = solo se ve con zoom. */
@@ -115,16 +117,22 @@ export const site = {
   genres: ["ambient", "noise", "drone", "industrial", "electrónica", "idm"],
 
   /**
-   * Artistas: cuadros fijos en el plano, alrededor de la esfera. Al tocar
-   * uno, despliega sus proyectos alrededor y se iluminan. Su lugar y su
-   * tamaño se ajustan desde el modo admin. PROVISIONALES: cuadros vacíos de prueba.
+   * Artistas: cuadros fijos en el plano, alrededor de la esfera. Salen del
+   * nombre de artista de cada lanzamiento (uno por nombre); su foto se pone
+   * en el admin (pestaña artistas) y su lugar y tamaño con "editar" en el
+   * sitio. Al tocar uno, despliega sus proyectos alrededor y se iluminan.
    */
-  artists: [
-    { id: "a01", name: "artista 01", x: 421, y: 342, size: 190 },
-    { id: "a02", name: "artista 02", x: -977, y: 264, size: 200 },
-    { id: "a03", name: "artista 03", x: 1178, y: 56, size: 220 },
-    { id: "a04", name: "artista 04", x: -971, y: 1381, size: 210 },
-  ] as Artist[],
+  artistas: {
+    /** Dónde aparece cada artista nuevo (en orden), hasta que se acomode con "editar". */
+    lugares: [
+      { x: 421, y: 342 },
+      { x: -977, y: 264 },
+      { x: 1178, y: 56 },
+      { x: -971, y: 1381 },
+    ],
+    /** Lado del cuadro de un artista nuevo, en unidades del mundo. */
+    tamano: 200,
+  },
 
   /** El despliegue de los proyectos alrededor de su artista. */
   despliegue: {
@@ -139,25 +147,26 @@ export const site = {
   },
 
   /**
-   * Proyectos (lanzamientos). Ya no están sueltos en el plano: cada uno
-   * aparece alrededor de su artista (artistId) al activarlo; x / y ya no se
-   * usan. PROVISIONALES: marcos vacíos con datos de relleno para probar el
-   * panel. pgl000 es diminuto a propósito: solo se ve si haces zoom.
+   * Proyectos (lanzamientos), de respaldo si no hay Supabase. Cada uno
+   * aparece alrededor de su artista (según `artist`) al activarlo; x / y solo
+   * cuentan si no tiene artista. PROVISIONALES: marcos vacíos con datos de
+   * relleno para probar el panel. pgl000 es diminuto a propósito: solo se ve
+   * si haces zoom.
    */
   releases: [
     {
-      catalog: "pgl001", title: "sin título", artist: "artista 01", artistId: "a01", year: 2026, x: 820, y: -360, size: 220,
+      catalog: "pgl001", title: "sin título", artist: "artista 01", year: 2026, x: 820, y: -360, size: 220,
       description: `${PLACEHOLDER}\n\nUn segundo párrafo para probar textos largos: el proceso, los instrumentos o las grabaciones, quién participó y dónde.`,
       tags: ["ambient", "drone"],
       // PROVISIONAL: enlaces de muestra para ver el estado activo
       links: { bandcamp: "https://bandcamp.com", youtube: "https://www.youtube.com", soulseek: "pingli" },
     },
-    { catalog: "pgl002", title: "sin título", artist: "artista 01", artistId: "a01", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
-    { catalog: "pgl003", title: "sin título", artist: "artista 02", artistId: "a02", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
-    { catalog: "pgl004", title: "sin título", artist: "artista 03", artistId: "a03", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
-    { catalog: "pgl005", title: "sin título", artist: "artista 03", artistId: "a03", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
-    { catalog: "pgl006", title: "sin título", artist: "artista 04", artistId: "a04", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
-    { catalog: "pgl000", title: "sin título", artist: "artista 04", artistId: "a04", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
+    { catalog: "pgl002", title: "sin título", artist: "artista 01", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
+    { catalog: "pgl003", title: "sin título", artist: "artista 02", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
+    { catalog: "pgl004", title: "sin título", artist: "artista 03", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
+    { catalog: "pgl005", title: "sin título", artist: "artista 03", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
+    { catalog: "pgl006", title: "sin título", artist: "artista 04", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
+    { catalog: "pgl000", title: "sin título", artist: "artista 04", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
   ] as Release[],
 
   /**

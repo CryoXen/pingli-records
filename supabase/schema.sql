@@ -88,6 +88,24 @@ create table if not exists public.admins (
 -- el nombre que muestra el menú del contador al iniciar sesión (chris, henry)
 alter table public.admins add column if not exists nombre text;
 
+-- artistas: salen del campo "artista" de los lanzamientos; aquí se guarda lo
+-- que el admin les pone (foto) y dónde están en el plano (x, y, tamaño; null =
+-- el lugar de siempre). Se relacionan por nombre.
+create table if not exists public.artistas (
+  id          uuid primary key default gen_random_uuid(),
+  nombre      text not null unique check (length(btrim(nombre)) > 0),
+  -- ruta de la foto dentro de la carpeta "portadas" (null = el cuadro vacío)
+  foto        text,
+  x           double precision,
+  y           double precision,
+  tamano      double precision check (tamano is null or tamano > 0),
+  actualizado timestamptz not null default now()
+);
+
+-- dónde queda cada lanzamiento alrededor de su artista (null = en abanico)
+alter table public.lanzamientos add column if not exists desfase_x double precision;
+alter table public.lanzamientos add column if not exists desfase_y double precision;
+
 create index if not exists frases_mundo on public.frases (banco, mundo, orden);
 create index if not exists lanzamientos_orden on public.lanzamientos (orden);
 
@@ -105,6 +123,8 @@ drop trigger if exists lanzamientos_tocar on public.lanzamientos;
 create trigger lanzamientos_tocar before update on public.lanzamientos for each row execute function public.tocar();
 drop trigger if exists ajustes_tocar on public.ajustes;
 create trigger ajustes_tocar before update on public.ajustes for each row execute function public.tocar();
+drop trigger if exists artistas_tocar on public.artistas;
+create trigger artistas_tocar before update on public.artistas for each row execute function public.tocar();
 
 -- ¿quien pregunta es admin?
 create or replace function public.es_admin() returns boolean
@@ -120,6 +140,7 @@ alter table public.lanzamientos enable row level security;
 alter table public.previsiones enable row level security;
 alter table public.ajustes enable row level security;
 alter table public.admins enable row level security;
+alter table public.artistas enable row level security;
 
 drop policy if exists "leer frases" on public.frases;
 create policy "leer frases" on public.frases for select using (activo or public.es_admin());
@@ -143,6 +164,12 @@ drop policy if exists "leer ajustes" on public.ajustes;
 create policy "leer ajustes" on public.ajustes for select using (true);
 drop policy if exists "admin escribe ajustes" on public.ajustes;
 create policy "admin escribe ajustes" on public.ajustes for all to authenticated
+  using (public.es_admin()) with check (public.es_admin());
+
+drop policy if exists "leer artistas" on public.artistas;
+create policy "leer artistas" on public.artistas for select using (true);
+drop policy if exists "admin escribe artistas" on public.artistas;
+create policy "admin escribe artistas" on public.artistas for all to authenticated
   using (public.es_admin()) with check (public.es_admin());
 
 -- cada admin solo puede verse a sí mismo (así el panel sabe si entró un admin)

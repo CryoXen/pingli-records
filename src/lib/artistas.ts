@@ -14,7 +14,8 @@
  *
  * Los proyectos solo existen alrededor de su artista: cerrados, quedan
  * recogidos dentro de él (su posición es la del artista, así el panel y las
- * etiquetas encuadran al artista).
+ * etiquetas encuadran al artista). Los que no tienen artista quedan sueltos
+ * en el plano, en su x / y, como antes.
  *
  * Todo se calcula en cada cuadro del motor (onFrame) y se coloca en pantalla
  * igual que el motor colocaba los lanzamientos. Los lugares y los tamaños son
@@ -109,6 +110,9 @@ export function mountArtistas(
   }));
   const relEls = new Map<number, HTMLElement>();
   layer.querySelectorAll<HTMLElement>("[data-release]").forEach((el) => relEls.set(Number(el.dataset.release), el));
+  // los que no son de ningún artista del plano: sueltos, siempre a la vista
+  const conArtista = new Set(estados.flatMap((e) => e.proyectos));
+  const sueltos = releases.map((_, j) => j).filter((j) => !conArtista.has(j));
 
   /** Dónde queda cada proyecto desplegado: donde lo puso el admin, o en abanico hacia afuera. */
   function lugares(e: Estado) {
@@ -198,6 +202,15 @@ export function mountArtistas(
         if (marcado) e.el.dataset.tagged = marcado;
         else if (e.el.dataset.tagged) delete e.el.dataset.tagged;
       }
+    }
+    for (const j of sueltos) {
+      const el = relEls.get(j);
+      const r = releases[j];
+      spots.push({ x: r.x, y: r.y, size: r.size });
+      if (!el) continue;
+      const visto = colocar(el, r.x, r.y, r.size, c);
+      const t = visto && r.size >= SECRETO ? 0 : -1;
+      if (el.tabIndex !== t) el.tabIndex = t;
     }
     for (const f of alCuadro) f(c);
   }
