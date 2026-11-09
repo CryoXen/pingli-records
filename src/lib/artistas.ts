@@ -4,8 +4,9 @@
  * Cada artista es un cuadro fijo alrededor de la esfera central (lugar y
  * tamaño en site.artists). Al tocar uno:
  *  - sus proyectos salen de él y se despliegan alrededor, en abanico hacia
- *    afuera (lejos de la esfera) o donde el admin los haya puesto (offset),
- *    unidos a él con líneas de 1 px;
+ *    afuera (lejos de la esfera) o donde el admin los haya puesto (offset);
+ *  - él y sus proyectos se iluminan (marco y nombre en el color de enlace) y
+ *    los demás artistas se atenúan (estilos en src/app/artistas.css);
  *  - la cámara encuadra al artista con sus proyectos.
  * Tocar un proyecto abre su panel (como siempre). El artista se cierra
  * tocándolo otra vez, con Esc (si el panel está cerrado), tocando el plano
@@ -79,7 +80,6 @@ const entra = (t: number) => t * t; // power2.in
 
 export function mountArtistas(
   layer: HTMLElement,
-  lineas: SVGSVGElement,
   artists: readonly Artist[],
   releases: Release[],
   s: DespliegueSettings,
@@ -109,19 +109,6 @@ export function mountArtistas(
   }));
   const relEls = new Map<number, HTMLElement>();
   layer.querySelectorAll<HTMLElement>("[data-release]").forEach((el) => relEls.set(Number(el.dataset.release), el));
-
-  // una línea por proyecto
-  const NS = "http://www.w3.org/2000/svg";
-  const lineaDe = new Map<number, SVGLineElement>();
-  for (const e of estados) {
-    for (const j of e.proyectos) {
-      const l = document.createElementNS(NS, "line");
-      l.setAttribute("class", "artista-linea");
-      l.style.display = "none";
-      lineas.append(l);
-      lineaDe.set(j, l);
-    }
-  }
 
   /** Dónde queda cada proyecto desplegado: donde lo puso el admin, o en abanico hacia afuera. */
   function lugares(e: Estado) {
@@ -164,28 +151,6 @@ export function mountArtistas(
     if (el && el.dataset.lod !== "hidden") el.dataset.lod = "hidden";
   }
 
-  /** Línea de borde a borde entre dos cuadros (centros y lados en el mundo). */
-  function unir(l: SVGLineElement, ax: number, ay: number, aSize: number, px: number, py: number, pSize: number, alpha: number, c: Cam) {
-    const dx = px - ax;
-    const dy = py - ay;
-    const len = Math.hypot(dx, dy);
-    const ux = dx / (len || 1);
-    const uy = dy / (len || 1);
-    const m = Math.max(Math.abs(ux), Math.abs(uy)) || 1;
-    const tA = aSize / 2 / m;
-    const tP = pSize / 2 / m;
-    if (alpha <= 0.001 || tA + tP >= len) {
-      l.style.display = "none";
-      return;
-    }
-    l.style.display = "";
-    l.setAttribute("x1", c.toScreenX(ax + ux * tA).toFixed(1));
-    l.setAttribute("y1", c.toScreenY(ay + uy * tA).toFixed(1));
-    l.setAttribute("x2", c.toScreenX(px - ux * tP).toFixed(1));
-    l.setAttribute("y2", c.toScreenY(py - uy * tP).toFixed(1));
-    l.style.opacity = alpha >= 1 ? "" : alpha.toFixed(3);
-  }
-
   function frame(c: Cam, dt: number) {
     cam = c;
     reloj += dt;
@@ -204,7 +169,6 @@ export function mountArtistas(
       for (const [k2, j] of e.proyectos.entries()) {
         const el = relEls.get(j);
         const r = releases[j];
-        const l = lineaDe.get(j);
         const tg = el?.dataset.tagged;
         if (tg) marcado = tg;
         if (!slots) {
@@ -213,7 +177,6 @@ export function mountArtistas(
           r.y = e.y;
           ocultar(el);
           if (el && el.tabIndex !== -1) el.tabIndex = -1;
-          if (l) l.style.display = "none";
           continue;
         }
         const slot = slots[k2];
@@ -229,7 +192,6 @@ export function mountArtistas(
           const t = e.abre > 0.5 ? 0 : -1;
           if (el.tabIndex !== t) el.tabIndex = r.size < SECRETO ? -1 : t;
         }
-        if (l) unir(l, e.x, e.y, e.size, px, py, size, e.abre, c);
       }
       // si una etiqueta del panel enciende alguno de sus proyectos, el artista también se marca
       if (e.el) {
@@ -273,16 +235,30 @@ export function mountArtistas(
 
   const avisar = () => window.dispatchEvent(new CustomEvent("pingli:artista", { detail: { index: abierto } }));
 
+  /** Ilumina (o apaga) al artista y a sus proyectos; con uno encendido, los demás se atenúan. */
+  function iluminar(e: Estado, on: boolean) {
+    if (e.el) {
+      if (on) e.el.dataset.selected = "";
+      else delete e.el.dataset.selected;
+      e.el.setAttribute("aria-expanded", String(on));
+    }
+    for (const j of e.proyectos) {
+      const el = relEls.get(j);
+      if (!el) continue;
+      if (on) el.dataset.encendido = "";
+      else delete el.dataset.encendido;
+    }
+    if (on) document.documentElement.dataset.artistaAbierto = "";
+    else delete document.documentElement.dataset.artistaAbierto;
+  }
+
   function abrir(i: number) {
     const e = estados[i];
     if (!e) return;
     if (abierto >= 0 && abierto !== i) cerrar(false);
     abierto = i;
     desplegar(e, 1);
-    if (e.el) {
-      e.el.dataset.selected = "";
-      e.el.setAttribute("aria-expanded", "true");
-    }
+    iluminar(e, true);
     encuadrar(e);
     avisar();
   }
@@ -292,10 +268,7 @@ export function mountArtistas(
     abierto = -1;
     if (!e) return;
     desplegar(e, 0);
-    if (e.el) {
-      delete e.el.dataset.selected;
-      e.el.setAttribute("aria-expanded", "false");
-    }
+    iluminar(e, false);
     if (cerrarPanel && hooks.panelOpen()) hooks.closePanel();
     avisar();
   }
@@ -353,7 +326,7 @@ export function mountArtistas(
     cerrar: () => cerrar(),
     destroy() {
       quitar.forEach((f) => f());
-      lineaDe.forEach((l) => l.remove());
+      delete document.documentElement.dataset.artistaAbierto;
     },
     /** Para el modo admin (artistas-ajuste.ts). */
     interno: {

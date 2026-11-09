@@ -116,7 +116,7 @@ export const site = {
 
   /**
    * Artistas: cuadros fijos en el plano, alrededor de la esfera. Al tocar
-   * uno, despliega sus proyectos alrededor, unidos con líneas. Su lugar y su
+   * uno, despliega sus proyectos alrededor y se iluminan. Su lugar y su
    * tamaño se ajustan desde el modo admin. PROVISIONALES: cuadros vacíos de prueba.
    */
   artists: [

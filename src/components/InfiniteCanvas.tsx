@@ -31,7 +31,6 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
   const stageRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
-  const lineasRef = useRef<SVGSVGElement>(null);
   // los proyectos se mueven con su artista: estas copias guardan dónde están
   // (las leen el motor, para volar hacia uno, y el panel, para encuadrar una etiqueta)
   const releases = useMemo(() => contenido.releases.map((r) => ({ ...r })), [contenido.releases]);
@@ -45,14 +44,13 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
     const stage = stageRef.current;
     const canvas = canvasRef.current;
     const layer = layerRef.current;
-    const lineas = lineasRef.current;
-    if (!stage || !canvas || !layer || !lineas) return;
+    if (!stage || !canvas || !layer) return;
 
     let alive = true;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // los artistas, fijos en el plano; sus proyectos se despliegan al tocarlos
-    const artistas = mountArtistas(layer, lineas, contenido.artists, releases, site.despliegue, reducedMotion, {
+    const artistas = mountArtistas(layer, contenido.artists, releases, site.despliegue, reducedMotion, {
       fly: (x, y, scale) => engineRef.current?.flyTo(x, y, scale),
       panelInset: releasePanelInset,
       wasDrag: () => engineRef.current?.wasDrag() ?? false,
@@ -176,7 +174,6 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
         aria-label="Lienzo infinito con una figura de caracteres al centro. Arrastra para moverte, usa la rueda para acercarte."
       />
       <div className="world-layer" ref={layerRef}>
-        <svg className="artistas-lineas" ref={lineasRef} aria-hidden="true" />
         <Artistas artists={contenido.artists} />
         <Releases releases={contenido.releases} engineRef={engineRef} />
       </div>

@@ -1,34 +1,19 @@
-/* ───────── artistas y las líneas a sus proyectos ───────── */
+/* ───────── el artista abierto y sus proyectos, iluminados ───────── */
 
-.artistas-lineas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.artista-linea {
-  stroke: var(--ink);
-  stroke-width: 1;
-  fill: none;
-  vector-effect: non-scaling-stroke;
-}
-
-/* el artista abierto: su marco y su nombre en el color de los enlaces */
-.artista[data-selected] {
+/* marco y nombre en el color de los enlaces */
+.artista[data-selected],
+.release[data-encendido] {
   border-color: var(--link);
 }
 
-.artista[data-selected] .release-caption {
+.artista[data-selected] .release-caption,
+.release[data-encendido] .release-caption {
   color: var(--link);
 }
 
-/* los nombres tapan las líneas que pasan por debajo de ellos */
-.world-layer .release-caption {
-  background: var(--paper);
+/* los demás artistas se atenúan (como con las etiquetas del panel) */
+:root[data-artista-abierto] .artista:not([data-selected]):not([data-lod="hidden"]) {
+  opacity: 0.22;
 }
 
 /* ───────── modo admin: ajustar lugar y tamaño ───────── */
