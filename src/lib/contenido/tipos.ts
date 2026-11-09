@@ -4,7 +4,7 @@
  * y la vista previa.
  */
 import type { BancoDeCarteles } from "@/config/carteles";
-import type { Release } from "@/config/site";
+import type { Artist, Release } from "@/config/site";
 import type { StoreId } from "@/lib/release-panel";
 
 export type Mundo = "claro" | "oscuro";
@@ -181,6 +181,9 @@ export type AjustesPrevision = {
 };
 
 export type Contenido = {
+  /** Los artistas que orbitan la esfera. */
+  readonly artists: readonly Artist[];
+  /** Sus proyectos (cada uno con su artistId). */
   readonly releases: readonly Release[];
   readonly carteles: BancoDeCarteles;
   readonly frases: BancoDeFrases;

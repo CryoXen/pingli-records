@@ -14,6 +14,16 @@ export type EngineOptions = {
   onCamera?: (cam: Camera) => void;
   /** Se llama a mitad del cruce al otro lado: aquí se cambia el tema. */
   onCross?: () => void;
+  /**
+   * Se llama en cada cuadro, después de dibujar (para lo que se mueve solo:
+   * los artistas en órbita y sus proyectos).
+   */
+  onFrame?: (cam: Camera, dt: number) => void;
+  /**
+   * false: el motor no coloca los lanzamientos ([data-release]); los coloca
+   * quien use onFrame (las órbitas).
+   */
+  placeReleases?: boolean;
 };
 
 /**
@@ -185,10 +195,11 @@ export class Engine {
     if (this.burst > 0) this.drawBurst();
 
     if (this.dirty) {
-      this.placeReleases();
+      if (this.opts.placeReleases !== false) this.placeReleases();
       this.opts.onCamera?.(cam);
       this.dirty = false;
     }
+    this.opts.onFrame?.(cam, dt);
   }
 
   /** Ruido de caracteres a pantalla completa (el cruce). */
@@ -415,7 +426,7 @@ export class Engine {
     );
 
     this.on(this.stage, "dblclick", (e) => {
-      if (this.locked || (e.target as Element).closest("[data-release]")) return;
+      if (this.locked || (e.target as Element).closest("[data-release],[data-artista]")) return;
       const p = this.local(e);
       const f = this.opts.config.camera.diveFactor;
       this.zoomAround(p.x, p.y, e.shiftKey ? 1 / f : f);

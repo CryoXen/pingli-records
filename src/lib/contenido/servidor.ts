@@ -18,6 +18,7 @@ import type { AjustesMusica, AjustesPrevision, AjustesSonidos, Contenido, FilaFr
 /** Lo de src/config y public/previsiones. */
 export function contenidoEstatico(): Contenido {
   return {
+    artists: site.artists,
     releases: site.releases,
     carteles,
     frases,

@@ -18,7 +18,13 @@ export type Release = {
   /** Número de catálogo. Aparece como "texto alternativo" dentro del marco vacío. */
   catalog: string;
   title: string;
+  /** El nombre del artista tal como se lee en el panel. */
   artist?: string;
+  /**
+   * A qué artista del plano pertenece (su `id` en `artists`). El proyecto
+   * solo aparece alrededor de ese artista, al activarlo.
+   */
+  artistId?: string;
   /** Año de publicación. */
   year?: number;
   /** Descripción general: propuesta, sonido, proceso. Una línea en blanco separa párrafos. */
@@ -43,6 +49,35 @@ export type Release = {
 };
 
 export type AsciiShape = "sphere" | "torus";
+
+/**
+ * La órbita de un artista alrededor de la esfera: una elipse con centro en
+ * la esfera (0, 0), inclinada, que se recorre a su propio ritmo.
+ */
+export type Orbit = {
+  /** Semiejes de la elipse, en unidades del mundo (la esfera mide 230 de radio). */
+  a: number;
+  b: number;
+  /** Inclinación de la elipse, en grados. */
+  tilt: number;
+  /** Segundos que tarda en dar una vuelta. */
+  period: number;
+  /** Dónde está al entrar, en grados sobre la elipse. */
+  phase: number;
+  /** 1 = contra las manecillas del reloj, -1 = a favor. */
+  dir: 1 | -1;
+};
+
+/** Un artista del sello: un cuadro que orbita la esfera; al tocarlo despliega sus proyectos. */
+export type Artist = {
+  id: string;
+  name: string;
+  /** Foto (URL). Sin foto, el cuadro queda vacío con su nombre de archivo. */
+  image?: string;
+  /** Lado del cuadro, en unidades del mundo. */
+  size: number;
+  orbit: Orbit;
+};
 
 /** Texto de relleno para probar el panel. PROVISIONAL. */
 const PLACEHOLDER =
@@ -90,23 +125,53 @@ export const site = {
   genres: ["ambient", "noise", "drone", "industrial", "electrónica", "idm"],
 
   /**
-   * Lanzamientos en el lienzo. PROVISIONALES: marcos vacíos con datos de relleno
-   * para probar el panel. pgl000 es diminuto a propósito: solo aparece si haces zoom.
+   * Artistas: orbitan la esfera, cada uno en su elipse y a su ritmo. Al
+   * tocar uno, se desacelera hasta casi detenerse y despliega sus proyectos
+   * alrededor, unidos con líneas. PROVISIONALES: cuadros vacíos de prueba.
+   */
+  artists: [
+    { id: "a01", name: "artista 01", size: 190, orbit: { a: 600, b: 400, tilt: 14, period: 300, phase: 35, dir: 1 } },
+    { id: "a02", name: "artista 02", size: 200, orbit: { a: 1050, b: 660, tilt: -28, period: 460, phase: 200, dir: -1 } },
+    { id: "a03", name: "artista 03", size: 220, orbit: { a: 1600, b: 1000, tilt: 50, period: 640, phase: 300, dir: 1 } },
+    { id: "a04", name: "artista 04", size: 210, orbit: { a: 2350, b: 1400, tilt: -9, period: 900, phase: 120, dir: -1 } },
+  ] as Artist[],
+
+  /** El movimiento de las órbitas y el despliegue de los proyectos. */
+  orbits: {
+    /** Velocidad del artista activado (fracción de la normal): casi imperceptible. */
+    selectedSpeed: 0.03,
+    /** Segundos que tarda en frenar al activarlo (y en volver a su ritmo al cerrarlo). */
+    ease: 2.2,
+    /** Segundos que tardan los proyectos en desplegarse y en recogerse. */
+    open: 0.9,
+    close: 0.55,
+    /** Espacio entre el artista y sus proyectos (fracción del lado del artista). */
+    gap: 0.45,
+    /** Ángulo máximo entre dos proyectos vecinos y abanico máximo, en grados. */
+    spread: 58,
+    fan: 230,
+  },
+
+  /**
+   * Proyectos (lanzamientos). Ya no están sueltos en el plano: cada uno
+   * aparece alrededor de su artista (artistId) al activarlo; x / y ya no se
+   * usan. PROVISIONALES: marcos vacíos con datos de relleno para probar el
+   * panel. pgl000 es diminuto a propósito: solo se ve si haces zoom.
    */
   releases: [
     {
-      catalog: "pgl001", title: "sin título", artist: "artista", year: 2026, x: 820, y: -360, size: 220,
+      catalog: "pgl001", title: "sin título", artist: "artista 01", artistId: "a01", year: 2026, x: 820, y: -360, size: 220,
       description: `${PLACEHOLDER}\n\nUn segundo párrafo para probar textos largos: el proceso, los instrumentos o las grabaciones, quién participó y dónde.`,
       tags: ["ambient", "drone"],
       // PROVISIONAL: enlaces de muestra para ver el estado activo
       links: { bandcamp: "https://bandcamp.com", youtube: "https://www.youtube.com", soulseek: "pingli" },
     },
-    { catalog: "pgl002", title: "sin título", artist: "artista", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
-    { catalog: "pgl003", title: "sin título", artist: "artista", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
-    { catalog: "pgl004", title: "sin título", artist: "artista", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
-    { catalog: "pgl005", title: "sin título", artist: "artista", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
-    { catalog: "pgl006", title: "sin título", artist: "artista", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
-    { catalog: "pgl000", title: "sin título", artist: "artista", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
+    { catalog: "pgl002", title: "sin título", artist: "artista 01", artistId: "a01", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
+    { catalog: "pgl003", title: "sin título", artist: "artista 02", artistId: "a02", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
+    { catalog: "pgl004", title: "sin título", artist: "artista 03", artistId: "a03", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
+    { catalog: "pgl005", title: "sin título", artist: "artista 03", artistId: "a03", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
+    { catalog: "pgl006", title: "sin título", artist: "artista 04", artistId: "a04", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
+    { catalog: "pgl000", title: "sin título", artist: "artista 04", artistId: "a04", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
   ] as Release[],
 
   /**

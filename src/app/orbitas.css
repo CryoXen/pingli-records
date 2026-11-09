@@ -1,0 +1,32 @@
+/* ───────── artistas en órbita y las líneas a sus proyectos ───────── */
+
+.orbitas-lineas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.orbita-linea {
+  stroke: var(--ink);
+  stroke-width: 1;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* el artista abierto: su marco y su nombre en el color de los enlaces */
+.artista[data-selected] {
+  border-color: var(--link);
+}
+
+.artista[data-selected] .release-caption {
+  color: var(--link);
+}
+
+/* los nombres tapan las líneas que pasan por debajo de ellos */
+.world-layer .release-caption {
+  background: var(--paper);
+}

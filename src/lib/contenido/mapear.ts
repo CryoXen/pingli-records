@@ -168,9 +168,16 @@ function porTema<T>(filas: readonly FilaFrase[], mundo: Mundo, banco: FilaFrase[
   return out;
 }
 
+/**
+ * PROVISIONAL (hasta que el admin tenga artistas): de qué artista es cada
+ * lanzamiento, según su catálogo en site.ts.
+ */
+const artistaDe = (catalogo: string) => site.releases.find((r) => r.catalog === catalogo)?.artistId;
+
 export function filaARelease(r: FilaLanzamiento, url: UrlPublica): Release {
   return {
     catalog: r.catalogo,
+    artistId: artistaDe(r.catalogo),
     title: r.titulo,
     artist: r.artista || undefined,
     year: r.anio ?? undefined,
@@ -202,6 +209,7 @@ export function filasAContenido(
   );
   const [claroF, oscuroF] = MUNDOS.map((m) => porTema<string>(fs, m, "frases", (r) => r.texto));
   return {
+    artists: site.artists,
     releases: orden(lanzamientos)
       .filter((r) => r.publicado)
       .map((r) => filaARelease(r, url)),
