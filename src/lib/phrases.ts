@@ -101,7 +101,7 @@ const DECAY = "*+^;:,. ";
 const IN_MS = 1400;
 const OUT_MS = 2400;
 /** Tamaño de la imagen del cartel cuando el texto mide `size` (igual que .phrase-icon en phrases.css). */
-const ICON_PX = 24;
+const ICON_PX = 20;
 /** Fuera de este rango de tamaño (px) la frase no se ve; muy fuera, se borra. */
 const MIN_PX = 5;
 const MAX_PX = 700;
