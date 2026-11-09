@@ -43,8 +43,8 @@
 /* carteles: el dibujo arriba de la frase */
 .phrase-icon {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   margin-bottom: 8px;
   color: var(--ink);
 }
@@ -59,10 +59,10 @@
   height: 100%;
 }
 
-/* la imagen de los carteles: pixel art de 14 × 16, al doble y sin suavizar */
+/* la imagen de los carteles: pixel art de 14 × 16 (sin fondo), a 1.5× y sin suavizar */
 .phrase-img {
   display: block;
-  width: 28px; /* la imagen mide 14 × 16: al doble, sin suavizar */
-  height: 32px;
+  width: 21px; /* la imagen mide 14 × 16: a 1.5×, sin suavizar */
+  height: 24px;
   image-rendering: pixelated;
 }
