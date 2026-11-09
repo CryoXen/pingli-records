@@ -56,33 +56,17 @@ export type Release = {
 
 export type AsciiShape = "sphere" | "torus";
 
-/**
- * La órbita de un artista alrededor de la esfera: una elipse con centro en
- * la esfera (0, 0), inclinada, que se recorre a su propio ritmo.
- */
-export type Orbit = {
-  /** Semiejes de la elipse, en unidades del mundo (la esfera mide 230 de radio). */
-  a: number;
-  b: number;
-  /** Inclinación de la elipse, en grados. */
-  tilt: number;
-  /** Segundos que tarda en dar una vuelta. */
-  period: number;
-  /** Dónde está al entrar, en grados sobre la elipse. */
-  phase: number;
-  /** 1 = contra las manecillas del reloj, -1 = a favor. */
-  dir: 1 | -1;
-};
-
-/** Un artista del sello: un cuadro que orbita la esfera; al tocarlo despliega sus proyectos. */
+/** Un artista del sello: un cuadro fijo en el plano; al tocarlo despliega sus proyectos. */
 export type Artist = {
   id: string;
   name: string;
   /** Foto (URL). Sin foto, el cuadro queda vacío con su nombre de archivo. */
   image?: string;
+  /** Centro del cuadro, en unidades del mundo (la esfera está en 0, 0 y mide 230 de radio). */
+  x: number;
+  y: number;
   /** Lado del cuadro, en unidades del mundo. */
   size: number;
-  orbit: Orbit;
 };
 
 /** Texto de relleno para probar el panel. PROVISIONAL. */
@@ -131,23 +115,19 @@ export const site = {
   genres: ["ambient", "noise", "drone", "industrial", "electrónica", "idm"],
 
   /**
-   * Artistas: orbitan la esfera, cada uno en su elipse y a su ritmo. Al
-   * tocar uno, se desacelera hasta casi detenerse y despliega sus proyectos
-   * alrededor, unidos con líneas. PROVISIONALES: cuadros vacíos de prueba.
+   * Artistas: cuadros fijos en el plano, alrededor de la esfera. Al tocar
+   * uno, despliega sus proyectos alrededor, unidos con líneas. Su lugar y su
+   * tamaño se ajustan desde el modo admin. PROVISIONALES: cuadros vacíos de prueba.
    */
   artists: [
-    { id: "a01", name: "artista 01", size: 190, orbit: { a: 600, b: 400, tilt: 14, period: 300, phase: 35, dir: 1 } },
-    { id: "a02", name: "artista 02", size: 200, orbit: { a: 1050, b: 660, tilt: -28, period: 460, phase: 200, dir: -1 } },
-    { id: "a03", name: "artista 03", size: 220, orbit: { a: 1600, b: 1000, tilt: 50, period: 640, phase: 300, dir: 1 } },
-    { id: "a04", name: "artista 04", size: 210, orbit: { a: 2350, b: 1400, tilt: -9, period: 900, phase: 120, dir: -1 } },
+    { id: "a01", name: "artista 01", x: 421, y: 342, size: 190 },
+    { id: "a02", name: "artista 02", x: -977, y: 264, size: 200 },
+    { id: "a03", name: "artista 03", x: 1178, y: 56, size: 220 },
+    { id: "a04", name: "artista 04", x: -971, y: 1381, size: 210 },
   ] as Artist[],
 
-  /** El movimiento de las órbitas y el despliegue de los proyectos. */
-  orbits: {
-    /** Velocidad del artista activado (fracción de la normal): casi imperceptible. */
-    selectedSpeed: 0.03,
-    /** Segundos que tarda en frenar al activarlo (y en volver a su ritmo al cerrarlo). */
-    ease: 2.2,
+  /** El despliegue de los proyectos alrededor de su artista. */
+  despliegue: {
     /** Segundos que tardan los proyectos en desplegarse y en recogerse. */
     open: 0.9,
     close: 0.55,

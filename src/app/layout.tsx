@@ -8,7 +8,7 @@ import "./phrases.css";
 import "./ciclo.css";
 import "./muro.css";
 import "./zona.css";
-import "./orbitas.css";
+import "./artistas.css";
 
 export const metadata: Metadata = {
   title: "pingli records",

@@ -8,8 +8,8 @@ import { Engine } from "@/engine/engine";
 import { entered } from "@/lib/audio/entry";
 import type { Contenido } from "@/lib/contenido/tipos";
 import { mountWall } from "@/lib/muro";
-import { mountOrbitas } from "@/lib/orbitas";
-import { mountAjuste } from "@/lib/orbitas-ajuste";
+import { mountArtistas } from "@/lib/artistas";
+import { mountAjuste } from "@/lib/artistas-ajuste";
 import { mountPhrases } from "@/lib/phrases";
 import { closeRelease, connectCamera, releasePanelInset } from "@/lib/release-panel";
 import { currentSide, setSide } from "@/lib/side";
@@ -51,16 +51,16 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
     let alive = true;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // los artistas en órbita; sus proyectos se despliegan al tocarlos
-    const orbitas = mountOrbitas(layer, lineas, contenido.artists, releases, site.orbits, reducedMotion, {
+    // los artistas, fijos en el plano; sus proyectos se despliegan al tocarlos
+    const artistas = mountArtistas(layer, lineas, contenido.artists, releases, site.despliegue, reducedMotion, {
       fly: (x, y, scale) => engineRef.current?.flyTo(x, y, scale),
       panelInset: releasePanelInset,
       wasDrag: () => engineRef.current?.wasDrag() ?? false,
       panelOpen: () => !!document.querySelector(".panel[data-open]"),
       closePanel: closeRelease,
     });
-    // modo admin: ajustar a mano la órbita, el lugar y el tamaño (se enciende con el evento "pingli:admin")
-    const quitarAjuste = mountAjuste(orbitas, (x, y, scale) => engineRef.current?.flyTo(x, y, scale));
+    // modo admin: ajustar a mano el lugar y el tamaño (se enciende con el evento "pingli:admin")
+    const quitarAjuste = mountAjuste(artistas);
 
     // los carteles que pueden brotar (sin las pistas del muro mientras esté apagado)
     const leibles = cartelesSegun(site.wall.enabled, contenido.carteles);
@@ -83,8 +83,8 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       : null;
     const field = phraseRef.current
       ? mountPhrases(phraseRef.current, site.phrases, { frases: contenido.frases, carteles: leibles }, entered, {
-          // no brota nada encima de los artistas ni de sus proyectos (se mueven: se lee cada vez)
-          releases: orbitas.spots,
+          // no brota nada encima de los artistas ni de sus proyectos (se despliegan: se lee cada vez)
+          releases: artistas.spots,
           dive: site.zone.dive,
           onDive: (d) => zone?.enter(d),
         })
@@ -105,7 +105,7 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       config: { ...site, releases },
       reducedMotion,
       placeReleases: false,
-      onFrame: (cam, dt) => orbitas.frame(cam, dt),
+      onFrame: (cam, dt) => artistas.frame(cam, dt),
       onCamera: (cam) => {
         field?.camera(cam);
         wall?.camera(cam);
@@ -159,7 +159,7 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       zone?.destroy();
       wall?.destroy();
       quitarAjuste();
-      orbitas.destroy();
+      artistas.destroy();
       connectCamera(null);
       tl.kill();
       engine.destroy();
@@ -176,7 +176,7 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
         aria-label="Lienzo infinito con una figura de caracteres al centro. Arrastra para moverte, usa la rueda para acercarte."
       />
       <div className="world-layer" ref={layerRef}>
-        <svg className="orbitas-lineas" ref={lineasRef} aria-hidden="true" />
+        <svg className="artistas-lineas" ref={lineasRef} aria-hidden="true" />
         <Artistas artists={contenido.artists} />
         <Releases releases={contenido.releases} engineRef={engineRef} />
       </div>

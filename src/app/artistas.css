@@ -1,6 +1,6 @@
-/* ───────── artistas en órbita y las líneas a sus proyectos ───────── */
+/* ───────── artistas y las líneas a sus proyectos ───────── */
 
-.orbitas-lineas {
+.artistas-lineas {
   position: absolute;
   top: 0;
   left: 0;
@@ -10,7 +10,7 @@
   pointer-events: none;
 }
 
-.orbita-linea {
+.artista-linea {
   stroke: var(--ink);
   stroke-width: 1;
   fill: none;
@@ -31,7 +31,7 @@
   background: var(--paper);
 }
 
-/* ───────── modo admin: ajustar órbita, lugar y tamaño ───────── */
+/* ───────── modo admin: ajustar lugar y tamaño ───────── */
 
 .ajuste {
   position: absolute;
@@ -42,7 +42,6 @@
   pointer-events: none;
 }
 
-.ajuste-punto,
 .ajuste-esquina {
   position: absolute;
   left: 0;
@@ -53,37 +52,19 @@
   background: var(--paper);
   border: 1px solid var(--link);
   pointer-events: auto;
-  cursor: grab;
+  cursor: nwse-resize;
   touch-action: none;
 }
 
 /* más fácil de agarrar con el dedo */
-.ajuste-punto::before,
 .ajuste-esquina::before {
   content: "";
   position: absolute;
   inset: -12px;
 }
 
-.ajuste-punto {
-  border-radius: 50%;
-}
-
-.ajuste-esquina {
-  cursor: nwse-resize;
-}
-
-.ajuste-punto[data-arrastrando],
 .ajuste-esquina[data-arrastrando] {
   background: var(--link);
-}
-
-.ajuste-elipse {
-  fill: none;
-  stroke: var(--link);
-  stroke-width: 1;
-  stroke-dasharray: 4 6;
-  vector-effect: non-scaling-stroke;
 }
 
 /* mientras se ajusta, los cuadros se arrastran */

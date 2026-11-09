@@ -10,7 +10,7 @@ const archivo = (a: Artist) =>
     .replace(/^-|-$/g, "") || a.id}.jpg`;
 
 /**
- * Los artistas: cuadros que orbitan la esfera (los mueve src/lib/orbitas.ts).
+ * Los artistas: cuadros fijos alrededor de la esfera (los coloca src/lib/artistas.ts).
  * Sin foto, el marco vacío con su nombre de archivo, como los lanzamientos.
  * Al tocar uno se despliegan sus proyectos alrededor.
  */

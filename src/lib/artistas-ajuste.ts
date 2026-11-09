@@ -2,23 +2,20 @@
  * Modo admin del plano: ajustar a mano un artista y sus proyectos.
  *
  * Con el modo admin encendido (evento "pingli:admin") aparece una barra
- * abajo. Al abrir un artista, la barra ofrece "ajustar": el artista se queda
- * quieto y se dibuja su órbita, y entonces:
- *  - los cuatro puntos de la elipse la estiran, la achican y la giran
- *    (los de su eje largo cambian tamaño e inclinación; los del corto, su ancho);
- *  - el artista se arrastra a lo largo de su órbita (de ahí empieza a girar);
- *  - los proyectos se arrastran libremente alrededor de él (lo siguen al girar);
+ * abajo. Al abrir un artista, la barra ofrece "ajustar posición y tamaño", y
+ * entonces:
+ *  - el artista se arrastra a donde sea del plano (sus proyectos lo siguen);
+ *  - los proyectos se arrastran libremente alrededor de él;
  *  - la esquina de abajo a la derecha de cada cuadro cambia su tamaño,
  *    proporcional (los cuadros son cuadrados).
  * "guardar" lo guarda (con la función que se registre en definirGuardado),
  * "cancelar" lo deja como estaba y "proyectos en abanico" los regresa a su
  * acomodo automático.
  */
-import type { Orbit } from "@/config/site";
-import { puntoDeOrbita, RAD, type Cam, type Estado, type Orbitas } from "@/lib/orbitas";
+import { type Cam, type Estado, type PlanoArtistas } from "@/lib/artistas";
 
 export type CambioAjuste = {
-  artista: { id: string; size: number; orbit: Orbit };
+  artista: { id: string; x: number; y: number; size: number };
   proyectos: { catalog: string; size: number; offset: { x: number; y: number } | null }[];
 };
 
@@ -30,16 +27,14 @@ export function definirGuardado(f: Guardar | null) {
   guardarCon = f;
 }
 
-/** Ejes de la elipse: nunca más chicos que esto (la esfera mide 230 de radio). */
-const EJE_MIN = 260;
 const LADO_MIN = 24;
 const LADO_MAX = 1600;
 
-export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: number) => void): () => void {
+export function mountAjuste(o: PlanoArtistas): () => void {
   const io = o.interno;
   let admin = false;
   let ajustando = -1;
-  let copia: { orb: Orbit; size: number; phi: number; proyectos: { size: number; offset: { x: number; y: number } | null | undefined }[] } | null = null;
+  let copia: { x: number; y: number; size: number; proyectos: { size: number; offset: { x: number; y: number } | null | undefined }[] } | null = null;
   let estado = "";
 
   // ——— la barra
@@ -50,30 +45,11 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
   barra.setAttribute("aria-label", "modo admin");
   document.body.append(barra);
 
-  // ——— los puntos y la elipse
+  // ——— las esquinas de tamaño
   const capa = document.createElement("div");
   capa.className = "ajuste";
   capa.hidden = true;
   io.layer.append(capa);
-  const NS = "http://www.w3.org/2000/svg";
-  const elipse = document.createElementNS(NS, "ellipse");
-  elipse.setAttribute("class", "ajuste-elipse");
-  elipse.style.display = "none";
-  io.lineas.prepend(elipse);
-
-  const punto = (clase: string, titulo: string) => {
-    const p = document.createElement("span");
-    p.className = clase;
-    p.title = titulo;
-    capa.append(p);
-    return p;
-  };
-  const ejes = [
-    { el: punto("ajuste-punto", "estira y gira la órbita"), eje: "a" as const, signo: 1 },
-    { el: punto("ajuste-punto", "estira y gira la órbita"), eje: "a" as const, signo: -1 },
-    { el: punto("ajuste-punto", "ensancha la órbita"), eje: "b" as const, signo: 1 },
-    { el: punto("ajuste-punto", "ensancha la órbita"), eje: "b" as const, signo: -1 },
-  ];
   let esquinas: { el: HTMLElement; de: "artista" | number }[] = [];
 
   const actual = (): Estado | undefined => io.estados[ajustando];
@@ -113,27 +89,7 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     el.addEventListener("pointercancel", suelta);
   }
 
-  // los puntos de la elipse
-  for (const h of ejes) {
-    h.el.addEventListener("pointerdown", (ev) => {
-      const e = actual();
-      if (!e) return;
-      arrastre(h.el, ev, (p) => {
-        const t = e.orb.tilt * RAD;
-        if (h.eje === "a") {
-          e.orb.a = Math.max(EJE_MIN, Math.hypot(p.x, p.y));
-          const ang = Math.atan2(h.signo * p.y, h.signo * p.x) / RAD;
-          e.orb.tilt = Math.round(ang * 10) / 10;
-        } else {
-          const n = { x: -Math.sin(t), y: Math.cos(t) };
-          e.orb.b = Math.max(EJE_MIN, Math.abs(p.x * n.x + p.y * n.y));
-        }
-        pintar();
-      });
-    });
-  }
-
-  // arrastrar al artista sobre su órbita, y a los proyectos por donde sea
+  // arrastrar al artista y a sus proyectos por donde sea
   const alPresionar = (ev: PointerEvent) => {
     if (ajustando < 0) return;
     const t = (ev.target as Element).closest<HTMLElement>("[data-artista],[data-release]");
@@ -144,13 +100,8 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
       const p0 = mundo(ev);
       const agarre = { x: p0.x - e.x, y: p0.y - e.y };
       arrastre(t, ev, (p) => {
-        // el punto de la órbita más cercano (en el marco de la elipse)
-        const x = p.x - agarre.x;
-        const y = p.y - agarre.y;
-        const tt = e.orb.tilt * RAD;
-        const xe = x * Math.cos(tt) + y * Math.sin(tt);
-        const ye = -x * Math.sin(tt) + y * Math.cos(tt);
-        e.phi = Math.atan2(ye / e.orb.b, xe / e.orb.a);
+        e.x = Math.round(p.x - agarre.x);
+        e.y = Math.round(p.y - agarre.y);
         pintar();
       });
       return;
@@ -180,7 +131,10 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     esquinas.forEach((q) => q.el.remove());
     esquinas = [];
     const nueva = (de: "artista" | number) => {
-      const q = punto("ajuste-esquina", "tamaño");
+      const q = document.createElement("span");
+      q.className = "ajuste-esquina";
+      q.title = "tamaño";
+      capa.append(q);
       q.addEventListener("pointerdown", (ev) => {
         arrastre(q, ev, (p) => {
           const cx = de === "artista" ? e.x : io.releases[de].x ?? e.x;
@@ -199,7 +153,7 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     });
   }
 
-  // ——— en cada cuadro: la elipse y los puntos siguen a la cámara
+  // ——— en cada cuadro: las esquinas siguen a la cámara
   const colocarPunto = (el: HTMLElement, sx: number, sy: number, c: Cam) => {
     const fuera = sx < -40 || sy < -40 || sx > c.w + 40 || sy > c.h + 40;
     el.style.display = fuera ? "none" : "";
@@ -208,18 +162,6 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
   const quitarCuadro = io.alCuadro((c) => {
     const e = actual();
     if (!e) return;
-    const cx = c.toScreenX(0);
-    const cy = c.toScreenY(0);
-    elipse.style.display = "";
-    elipse.setAttribute("cx", cx.toFixed(1));
-    elipse.setAttribute("cy", cy.toFixed(1));
-    elipse.setAttribute("rx", (e.orb.a * c.scale).toFixed(1));
-    elipse.setAttribute("ry", (e.orb.b * c.scale).toFixed(1));
-    elipse.setAttribute("transform", `rotate(${e.orb.tilt} ${cx.toFixed(1)} ${cy.toFixed(1)})`);
-    for (const h of ejes) {
-      const p = puntoDeOrbita(e.orb, (h.eje === "a" ? 0 : Math.PI / 2) + (h.signo < 0 ? Math.PI : 0));
-      colocarPunto(h.el, c.toScreenX(p.x), c.toScreenY(p.y), c);
-    }
     for (const q of esquinas) {
       const r = q.de === "artista" ? null : io.releases[q.de];
       const x = r ? r.x ?? e.x : e.x;
@@ -256,12 +198,10 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     if (e) {
       fila.append(
         texto(`ajustando ${e.a.name}`, "ajuste-titulo"),
-        texto(`órbita ${Math.round(e.orb.a)} × ${Math.round(e.orb.b)} · ${Math.round(e.orb.tilt)}° · cuadro ${Math.round(e.size)}`, "ajuste-datos"),
+        texto(`lugar ${Math.round(e.x)}, ${Math.round(-e.y)} · cuadro ${Math.round(e.size)}`, "ajuste-datos"),
       );
       barra.append(fila);
-      barra.append(
-        texto("puntos de la órbita: estírala y gírala · arrastra al artista sobre ella y a sus proyectos donde quieras · esquina: tamaño", "ajuste-ayuda"),
-      );
+      barra.append(texto("arrastra al artista y a sus proyectos donde quieras · esquina: tamaño", "ajuste-ayuda"));
       const acciones = document.createElement("div");
       acciones.className = "ajuste-fila";
       acciones.append(
@@ -293,38 +233,26 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     ajustando = i;
     estado = "";
     io.setAjustando(true);
-    io.fijar(i, true);
     copia = {
-      orb: { ...e.orb },
+      x: e.x,
+      y: e.y,
       size: e.size,
-      phi: e.phi,
       proyectos: e.proyectos.map((j) => ({ size: io.releases[j].size, offset: io.releases[j].offset ? { ...io.releases[j].offset! } : io.releases[j].offset })),
     };
     document.documentElement.dataset.ajustando = "";
     capa.hidden = false;
     hacerEsquinas(e);
-    // que se vea toda su órbita
-    const c = io.cam();
-    if (c) {
-      const t = e.orb.tilt * RAD;
-      const ex = Math.sqrt((e.orb.a * Math.cos(t)) ** 2 + (e.orb.b * Math.sin(t)) ** 2) + e.size;
-      const ey = Math.sqrt((e.orb.a * Math.sin(t)) ** 2 + (e.orb.b * Math.cos(t)) ** 2) + e.size;
-      const barraAlto = barra.getBoundingClientRect().height || 120;
-      const scale = Math.min((c.w - 80) / (2 * ex), (c.h - 80 - barraAlto) / (2 * ey));
-      fly(0, barraAlto / 2 / scale, scale);
-    }
     pintar();
+    // que se vea el artista con sus proyectos, por encima de la barra
+    io.encuadrar(e, barra.getBoundingClientRect().height + 24);
   }
 
   function terminar() {
-    const e = actual();
-    if (e) io.fijar(ajustando, false);
     ajustando = -1;
     copia = null;
     io.setAjustando(false);
     delete document.documentElement.dataset.ajustando;
     capa.hidden = true;
-    elipse.style.display = "none";
     esquinas.forEach((q) => q.el.remove());
     esquinas = [];
     pintar();
@@ -333,9 +261,9 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
   function cancelar() {
     const e = actual();
     if (e && copia) {
-      e.orb = copia.orb;
+      e.x = copia.x;
+      e.y = copia.y;
       e.size = copia.size;
-      e.phi = copia.phi;
       e.proyectos.forEach((j, k) => {
         io.releases[j].size = copia!.proyectos[k].size;
         io.releases[j].offset = copia!.proyectos[k].offset;
@@ -348,13 +276,8 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
   async function guardar() {
     const e = actual();
     if (!e) return;
-    const fase = ((((e.phi / RAD) % 360) + 360) % 360);
     const cambio: CambioAjuste = {
-      artista: {
-        id: e.a.id,
-        size: Math.round(e.size),
-        orbit: { ...e.orb, a: Math.round(e.orb.a), b: Math.round(e.orb.b), phase: Math.round(fase * 10) / 10 },
-      },
+      artista: { id: e.a.id, x: Math.round(e.x), y: Math.round(e.y), size: Math.round(e.size) },
       proyectos: e.proyectos.map((j) => ({ catalog: io.releases[j].catalog, size: io.releases[j].size, offset: io.releases[j].offset ?? null })),
     };
     if (!guardarCon) {
@@ -411,7 +334,6 @@ export function mountAjuste(o: Orbitas, fly: (x: number, y: number, scale: numbe
     io.layer.removeEventListener("click", sinClic, true);
     barra.remove();
     capa.remove();
-    elipse.remove();
     delete document.documentElement.dataset.ajustando;
     delete document.documentElement.dataset.admin;
   };

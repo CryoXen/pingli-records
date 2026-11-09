@@ -7,7 +7,7 @@ import { openRelease } from "@/lib/release-panel";
  * Los proyectos (lanzamientos). Sin foto son marcos vacíos que muestran el
  * nombre de archivo de su portada, como una imagen que no ha cargado; con
  * foto, la foto llena el cuadro. Aparecen alrededor de su artista al
- * activarlo (los coloca src/lib/orbitas.ts); aquí solo se definen.
+ * activarlo (los coloca src/lib/artistas.ts); aquí solo se definen.
  * Al tocar uno se abre su panel a la derecha.
  */
 export function Releases({

@@ -181,7 +181,7 @@ export type AjustesPrevision = {
 };
 
 export type Contenido = {
-  /** Los artistas que orbitan la esfera. */
+  /** Los artistas, fijos alrededor de la esfera. */
   readonly artists: readonly Artist[];
   /** Sus proyectos (cada uno con su artistId). */
   readonly releases: readonly Release[];
