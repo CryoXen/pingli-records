@@ -26,13 +26,21 @@ Variables. Sin ellas el sitio funciona igual con lo de `src/config` y
 - Ajustes en la tabla `ajustes`: `sonidos`, `musica` y `prevision` (JSON).
 - `supabase/seed.sql`: el contenido inicial (120 carteles, 180 frases,
   7 lanzamientos). `scripts/seed.mjs` lo rehace desde `src/config`.
-- Un admin = un usuario de Supabase Auth con su `user_id` en `public.admins`.
+- Un admin = un usuario de Supabase Auth con su `user_id` en `public.admins`
+  (y su `nombre`, el que muestra el menú del contador).
+- Artistas: salen del campo `artista` de cada lanzamiento (uno por nombre).
+  `public.artistas` guarda su foto, lugar y tamaño (por nombre); los
+  lanzamientos guardan su lugar alrededor del artista en `desfase_x/desfase_y`
+  (null = en abanico). Los lanzamientos sin artista quedan sueltos en su x / y.
 
 ## Admin
 
-`/admin`, o mantener presionada la cuenta 3:33 (abajo a la derecha) 3.33 s.
+`/admin`, o desde el menú del contador: mantener presionada la cuenta 3:33
+(abajo a la derecha) 3.33 s abre un menú con login (ahí mismo; ya con sesión
+muestra tu nombre), ingresar a panel, editar (ajustar en el plano el lugar y
+el tamaño de artistas y proyectos) y salir (cierra la sesión).
 Frases por mundo, lanzamientos (foto, información, etiquetas, enlaces,
-posición), previsiones (fotos y videos de hasta 30 s, tipo y rareza, cuánto
+posición), artistas (foto y nombre), previsiones (fotos y videos de hasta 30 s, tipo y rareza, cuánto
 dura la cuenta regresiva y cuánto se ve cada foto), música (varias canciones de fondo por mundo y cuál suena;
 la canción final del contador) y sonidos de la interfaz (volumen global).
 Los videos largos se recortan al fragmento elegido y se convierten a MP4

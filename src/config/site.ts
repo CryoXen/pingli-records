@@ -18,7 +18,15 @@ export type Release = {
   /** Número de catálogo. Aparece como "texto alternativo" dentro del marco vacío. */
   catalog: string;
   title: string;
+  /** El nombre del artista tal como se lee en el panel. */
   artist?: string;
+  /**
+   * A qué artista del plano pertenece (su `id`). Lo pone
+   * src/lib/contenido/artistas.ts según el nombre en `artist`. El proyecto
+   * solo aparece alrededor de ese artista, al activarlo; sin artista queda
+   * suelto en el plano, en su x / y.
+   */
+  artistId?: string;
   /** Año de publicación. */
   year?: number;
   /** Descripción general: propuesta, sonido, proceso. Una línea en blanco separa párrafos. */
@@ -33,16 +41,35 @@ export type Release = {
   links?: Partial<Record<StoreId, string>>;
   /** Foto del lanzamiento (URL). Sin foto, el cuadro queda vacío con su nombre de archivo. */
   image?: string;
-  /** Posición en el mundo (unidades del lienzo; el objeto ASCII está en 0,0). */
+  /** Posición en el mundo (unidades del lienzo; el objeto ASCII está en 0,0). Solo si no tiene artista. */
   x: number;
   y: number;
   /** Lado del marco en unidades del mundo. Valores muy pequeños = solo se ve con zoom. */
   size: number;
   /** Ruta a la portada cuando exista (sin usar: la foto va en `image`). */
   cover?: string;
+  /**
+   * Dónde queda respecto a su artista al desplegarse (unidades del mundo,
+   * desde el centro del artista). Sin valor: en el abanico automático.
+   * Se ajusta arrastrándolo en el modo admin.
+   */
+  offset?: { x: number; y: number } | null;
 };
 
 export type AsciiShape = "sphere" | "torus";
+
+/** Un artista del sello: un cuadro fijo en el plano; al tocarlo despliega sus proyectos. */
+export type Artist = {
+  id: string;
+  name: string;
+  /** Foto (URL). Sin foto, el cuadro queda vacío con su nombre de archivo. */
+  image?: string;
+  /** Centro del cuadro, en unidades del mundo (la esfera está en 0, 0 y mide 230 de radio). */
+  x: number;
+  y: number;
+  /** Lado del cuadro, en unidades del mundo. */
+  size: number;
+};
 
 /** Texto de relleno para probar el panel. PROVISIONAL. */
 const PLACEHOLDER =
@@ -90,23 +117,56 @@ export const site = {
   genres: ["ambient", "noise", "drone", "industrial", "electrónica", "idm"],
 
   /**
-   * Lanzamientos en el lienzo. PROVISIONALES: marcos vacíos con datos de relleno
-   * para probar el panel. pgl000 es diminuto a propósito: solo aparece si haces zoom.
+   * Artistas: cuadros fijos en el plano, alrededor de la esfera. Salen del
+   * nombre de artista de cada lanzamiento (uno por nombre); su foto se pone
+   * en el admin (pestaña artistas) y su lugar y tamaño con "editar" en el
+   * sitio. Al tocar uno, despliega sus proyectos alrededor y se iluminan.
+   */
+  artistas: {
+    /** Dónde aparece cada artista nuevo (en orden), hasta que se acomode con "editar". */
+    lugares: [
+      { x: 421, y: 342 },
+      { x: -977, y: 264 },
+      { x: 1178, y: 56 },
+      { x: -971, y: 1381 },
+    ],
+    /** Lado del cuadro de un artista nuevo, en unidades del mundo. */
+    tamano: 200,
+  },
+
+  /** El despliegue de los proyectos alrededor de su artista. */
+  despliegue: {
+    /** Segundos que tardan los proyectos en desplegarse y en recogerse. */
+    open: 0.9,
+    close: 0.55,
+    /** Espacio entre el artista y sus proyectos (fracción del lado del artista). */
+    gap: 0.45,
+    /** Ángulo máximo entre dos proyectos vecinos y abanico máximo, en grados. */
+    spread: 58,
+    fan: 230,
+  },
+
+  /**
+   * Proyectos (lanzamientos), de respaldo si no hay Supabase. Cada uno
+   * aparece alrededor de su artista (según `artist`) al activarlo; x / y solo
+   * cuentan si no tiene artista. PROVISIONALES: marcos vacíos con datos de
+   * relleno para probar el panel. pgl000 es diminuto a propósito: solo se ve
+   * si haces zoom.
    */
   releases: [
     {
-      catalog: "pgl001", title: "sin título", artist: "artista", year: 2026, x: 820, y: -360, size: 220,
+      catalog: "pgl001", title: "sin título", artist: "artista 01", year: 2026, x: 820, y: -360, size: 220,
       description: `${PLACEHOLDER}\n\nUn segundo párrafo para probar textos largos: el proceso, los instrumentos o las grabaciones, quién participó y dónde.`,
       tags: ["ambient", "drone"],
       // PROVISIONAL: enlaces de muestra para ver el estado activo
       links: { bandcamp: "https://bandcamp.com", youtube: "https://www.youtube.com", soulseek: "pingli" },
     },
-    { catalog: "pgl002", title: "sin título", artist: "artista", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
-    { catalog: "pgl003", title: "sin título", artist: "artista", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
-    { catalog: "pgl004", title: "sin título", artist: "artista", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
-    { catalog: "pgl005", title: "sin título", artist: "artista", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
-    { catalog: "pgl006", title: "sin título", artist: "artista", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
-    { catalog: "pgl000", title: "sin título", artist: "artista", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
+    { catalog: "pgl002", title: "sin título", artist: "artista 01", year: 2026, x: -1150, y: 260, size: 300, description: PLACEHOLDER, tags: ["noise", "industrial"] },
+    { catalog: "pgl003", title: "sin título", artist: "artista 02", year: 2026, x: 380, y: 940, size: 160, description: PLACEHOLDER, tags: ["electrónica", "idm"] },
+    { catalog: "pgl004", title: "sin título", artist: "artista 03", year: 2026, x: -620, y: -1180, size: 260, description: PLACEHOLDER, tags: ["drone"] },
+    { catalog: "pgl005", title: "sin título", artist: "artista 03", year: 2026, x: 2300, y: 820, size: 340, description: PLACEHOLDER, tags: ["ambient", "electrónica"] },
+    { catalog: "pgl006", title: "sin título", artist: "artista 04", year: 2026, x: -2600, y: -700, size: 200, description: PLACEHOLDER, tags: ["noise"] },
+    { catalog: "pgl000", title: "sin título", artist: "artista 04", year: 2026, x: 1240, y: 1260, size: 1.6, description: PLACEHOLDER, tags: ["drone", "noise"] },
   ] as Release[],
 
   /**
@@ -240,11 +300,12 @@ export const site = {
 
   /**
    * Panel de admin: frases, lanzamientos y previsiones. Se entra por la URL
-   * o manteniendo presionada la cuenta 3:33 (abajo a la derecha). Siempre
-   * pide usuario y contraseña (Supabase).
+   * o desde el menú que abre la cuenta 3:33 (abajo a la derecha) al
+   * mantenerla presionada: login, ingresar a panel, editar (el plano) y
+   * salir. Siempre pide usuario y contraseña (Supabase).
    */
   admin: {
-    /** A dónde lleva la acción secreta. */
+    /** A dónde lleva "ingresar a panel". */
     path: "/admin",
     /** Segundos que hay que mantener presionada la cuenta. 0 = sin acción secreta. */
     hold: 3.33,

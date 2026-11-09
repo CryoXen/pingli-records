@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { gsap } from "gsap";
 import { site } from "@/config/site";
 import { cartelesSegun } from "@/config/carteles";
@@ -8,10 +8,13 @@ import { Engine } from "@/engine/engine";
 import { entered } from "@/lib/audio/entry";
 import type { Contenido } from "@/lib/contenido/tipos";
 import { mountWall } from "@/lib/muro";
+import { mountArtistas } from "@/lib/artistas";
+import { mountAjuste } from "@/lib/artistas-ajuste";
 import { mountPhrases } from "@/lib/phrases";
-import { connectCamera } from "@/lib/release-panel";
+import { closeRelease, connectCamera, releasePanelInset } from "@/lib/release-panel";
 import { currentSide, setSide } from "@/lib/side";
 import { mountZone } from "@/lib/zona";
+import { Artistas } from "./Artistas";
 import AudioGate from "./AudioGate";
 import { Overlay } from "./Overlay";
 import ReleasePanel from "./ReleasePanel";
@@ -28,6 +31,9 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
   const stageRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
+  // los proyectos se mueven con su artista: estas copias guardan dónde están
+  // (las leen el motor, para volar hacia uno, y el panel, para encuadrar una etiqueta)
+  const releases = useMemo(() => contenido.releases.map((r) => ({ ...r })), [contenido.releases]);
   const phraseRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const hx = useRef<HTMLSpanElement>(null);
@@ -42,6 +48,17 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
 
     let alive = true;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // los artistas, fijos en el plano; sus proyectos se despliegan al tocarlos
+    const artistas = mountArtistas(layer, contenido.artists, releases, site.despliegue, reducedMotion, {
+      fly: (x, y, scale) => engineRef.current?.flyTo(x, y, scale),
+      panelInset: releasePanelInset,
+      wasDrag: () => engineRef.current?.wasDrag() ?? false,
+      panelOpen: () => !!document.querySelector(".panel[data-open]"),
+      closePanel: closeRelease,
+    });
+    // modo admin: ajustar a mano el lugar y el tamaño (se enciende con el evento "pingli:admin")
+    const quitarAjuste = mountAjuste(artistas);
 
     // los carteles que pueden brotar (sin las pistas del muro mientras esté apagado)
     const leibles = cartelesSegun(site.wall.enabled, contenido.carteles);
@@ -64,7 +81,8 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       : null;
     const field = phraseRef.current
       ? mountPhrases(phraseRef.current, site.phrases, { frases: contenido.frases, carteles: leibles }, entered, {
-          releases: contenido.releases,
+          // no brota nada encima de los artistas ni de sus proyectos (se despliegan: se lee cada vez)
+          releases: artistas.spots,
           dive: site.zone.dive,
           onDive: (d) => zone?.enter(d),
         })
@@ -82,8 +100,10 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       : null;
 
     const engine = new Engine(stage, canvas, layer, {
-      config: { ...site, releases: [...contenido.releases] },
+      config: { ...site, releases },
       reducedMotion,
+      placeReleases: false,
+      onFrame: (cam, dt) => artistas.frame(cam, dt),
       onCamera: (cam) => {
         field?.camera(cam);
         wall?.camera(cam);
@@ -136,12 +156,14 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       field?.destroy();
       zone?.destroy();
       wall?.destroy();
+      quitarAjuste();
+      artistas.destroy();
       connectCamera(null);
       tl.kill();
       engine.destroy();
       engineRef.current = null;
     };
-  }, [contenido]);
+  }, [contenido, releases]);
 
   return (
     <main className="stage" ref={stageRef}>
@@ -151,11 +173,14 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
         role="img"
         aria-label="Lienzo infinito con una figura de caracteres al centro. Arrastra para moverte, usa la rueda para acercarte."
       />
-      <Releases releases={contenido.releases} layerRef={layerRef} engineRef={engineRef} />
+      <div className="world-layer" ref={layerRef}>
+        <Artistas artists={contenido.artists} />
+        <Releases releases={contenido.releases} engineRef={engineRef} />
+      </div>
       <div className="phrase-layer" ref={phraseRef} aria-hidden="true" />
       <Overlay hud={{ x: hx, y: hy, z: hz }} cuenta={contenido.prevision.duracionCiclo} />
       <AudioGate sonidos={contenido.sonidos} musica={contenido.musica} />
-      <ReleasePanel releases={contenido.releases} />
+      <ReleasePanel releases={releases} />
     </main>
   );
 }

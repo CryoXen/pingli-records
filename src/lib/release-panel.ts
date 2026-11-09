@@ -359,7 +359,8 @@ export function mountReleasePanel(
   }
 
   const onDocKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && openIndex >= 0) {
+    // (con el menú del contador abierto, Esc solo cierra el menú)
+    if (e.key === "Escape" && openIndex >= 0 && !document.documentElement.hasAttribute("data-menu-admin")) {
       e.preventDefault();
       close();
     }

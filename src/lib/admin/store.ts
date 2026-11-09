@@ -2,7 +2,7 @@
  * Lo que el panel de admin necesita de dónde se guarda el contenido. En el
  * sitio es Supabase (store-supabase.ts); en la vista previa, el navegador.
  */
-import type { AjustesSonidos, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
+import type { AjustesSonidos, FilaArtista, FilaFrase, FilaLanzamiento, FilaPrevision } from "@/lib/contenido/tipos";
 
 export type Carpeta = "portadas" | "previsiones" | "sonidos";
 export type ClaveAjuste = "musica" | "prevision";
@@ -29,6 +29,15 @@ export interface AdminStore {
   /** `antes`: el catálogo anterior, si se cambió. */
   guardarLanzamiento(l: FilaLanzamiento, antes?: string): Promise<void>;
   borrarLanzamiento(catalogo: string): Promise<void>;
+
+  /** Lo guardado de cada artista (foto, lugar, tamaño); los artistas salen de los lanzamientos. */
+  artistas(): Promise<FilaArtista[]>;
+  /**
+   * Crea (sin id) o cambia la foto y el nombre de un artista. `antes`: los
+   * nombres con que aparece en sus lanzamientos, si se renombró; esos
+   * lanzamientos pasan al nombre nuevo.
+   */
+  guardarArtista(f: { id: string | null; nombre: string; foto: string | null }, antes?: string[]): Promise<FilaArtista>;
 
   previsiones(): Promise<FilaPrevision[]>;
   /** Crea o actualiza (por id). */

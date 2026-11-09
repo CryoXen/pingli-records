@@ -8,6 +8,8 @@ import "./phrases.css";
 import "./ciclo.css";
 import "./muro.css";
 import "./zona.css";
+import "./artistas.css";
+import "./menu-admin.css";
 
 export const metadata: Metadata = {
   title: "pingli records",

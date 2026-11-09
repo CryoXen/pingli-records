@@ -3,12 +3,14 @@
  */
 import type { Cartel } from "@/config/carteles";
 import { site, type Release } from "@/config/site";
+import { armarArtistas } from "./artistas";
 import type {
   AjustesMusica,
   AjustesPrevision,
   AjustesSonidos,
   CancionFondo,
   Contenido,
+  FilaArtista,
   FilaFrase,
   FilaLanzamiento,
   FilaPrevision,
@@ -169,6 +171,7 @@ function porTema<T>(filas: readonly FilaFrase[], mundo: Mundo, banco: FilaFrase[
 }
 
 export function filaARelease(r: FilaLanzamiento, url: UrlPublica): Release {
+  const conDesfase = r.desfase_x != null && r.desfase_y != null;
   return {
     catalog: r.catalogo,
     title: r.titulo,
@@ -181,6 +184,7 @@ export function filaARelease(r: FilaLanzamiento, url: UrlPublica): Release {
     x: r.x,
     y: r.y,
     size: r.tamano,
+    offset: conDesfase ? { x: r.desfase_x!, y: r.desfase_y! } : null,
   };
 }
 
@@ -189,6 +193,7 @@ export function filasAContenido(
   lanzamientos: readonly FilaLanzamiento[],
   previsiones: readonly FilaPrevision[],
   url: UrlPublica,
+  artistas: readonly FilaArtista[],
   ajustes: {
     sonidos?: Partial<AjustesSonidos> | null;
     musica?: Partial<AjustesMusica> | null;
@@ -201,10 +206,17 @@ export function filasAContenido(
     porTema<Cartel>(fs, m, "carteles", (r) => ({ id: r.id, icono: r.icono ?? "puntos", texto: r.texto })),
   );
   const [claroF, oscuroF] = MUNDOS.map((m) => porTema<string>(fs, m, "frases", (r) => r.texto));
-  return {
-    releases: orden(lanzamientos)
+  // los artistas salen de los lanzamientos publicados; de la tabla, su foto, lugar y tamaño
+  const { artists, releases } = armarArtistas(
+    orden(lanzamientos)
       .filter((r) => r.publicado)
       .map((r) => filaARelease(r, url)),
+    artistas,
+    url,
+  );
+  return {
+    artists,
+    releases,
     carteles: { claro: claroC, oscuro: oscuroC },
     frases: { claro: claroF, oscuro: oscuroF },
     previsiones: previsiones

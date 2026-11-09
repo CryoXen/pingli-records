@@ -217,7 +217,7 @@ export function mountPhrases(
       const y = (r.y - c.y) * c.scale + c.h / 2;
       out.push({ l: x - half, t: y - half, r: x + half, b: y + half });
     }
-    document.querySelectorAll<HTMLElement>('[data-release]:not([data-lod="hidden"])').forEach((el) => {
+    document.querySelectorAll<HTMLElement>('[data-release]:not([data-lod="hidden"]), [data-artista]:not([data-lod="hidden"])').forEach((el) => {
       out.push(boxOf(el.getBoundingClientRect(), 28));
     });
     const panel = document.querySelector<HTMLElement>(".panel[data-open]");

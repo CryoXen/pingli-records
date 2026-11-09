@@ -728,6 +728,16 @@
   font-size: 12px;
 }
 
+/* artistas: la lista de sus lanzamientos */
+.adm-lista-simple {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
 .adm-sonidos {
   display: grid;
   grid-template-columns: 16ch 1fr 1fr;

@@ -12,13 +12,17 @@ import { carteles } from "@/config/carteles";
 import { frases } from "@/config/frases";
 import { site } from "@/config/site";
 import { listPrevisiones } from "@/lib/previsiones";
+import { armarArtistas } from "./artistas";
 import { completarPrevision, filasAContenido, musicaPorDefecto, musicaUI, sonidosPorDefecto, sonidosUI } from "./mapear";
-import type { AjustesMusica, AjustesPrevision, AjustesSonidos, Contenido, FilaFrase, FilaLanzamiento, FilaPrevision } from "./tipos";
+import type { AjustesMusica, AjustesPrevision, AjustesSonidos, Contenido, FilaArtista, FilaFrase, FilaLanzamiento, FilaPrevision } from "./tipos";
 
 /** Lo de src/config y public/previsiones. */
 export function contenidoEstatico(): Contenido {
+  // los artistas salen del nombre de artista de cada lanzamiento
+  const { artists, releases } = armarArtistas(site.releases, [], null);
   return {
-    releases: site.releases,
+    artists,
+    releases,
     carteles,
     frases,
     previsiones: listPrevisiones(),
@@ -43,6 +47,9 @@ export async function getContenido(): Promise<Contenido> {
     if (error) throw error;
     // los ajustes (sonidos, música, previsión): lo que falte se toma de site.ts
     const a = await sb.from("ajustes").select("clave, valor").in("clave", ["sonidos", "musica", "prevision"]);
+    // foto, lugar y tamaño de los artistas (si la tabla no responde, quedan en su lugar de siempre)
+    const ar = await sb.from("artistas").select("id, nombre, foto, x, y, tamano");
+    if (ar.error) console.error("[pingli] no se pudo leer la tabla artistas", ar.error);
     const ajuste = <T>(clave: string) =>
       a.error ? null : (((a.data ?? []) as { clave: string; valor: unknown }[]).find((x) => x.clave === clave)?.valor as Partial<T> | undefined) ?? null;
     return filasAContenido(
@@ -50,6 +57,7 @@ export async function getContenido(): Promise<Contenido> {
       l.data as FilaLanzamiento[],
       p.data as FilaPrevision[],
       (carpeta, ruta) => sb.storage.from(carpeta).getPublicUrl(ruta).data.publicUrl,
+      ar.error ? [] : ((ar.data ?? []) as FilaArtista[]),
       {
         sonidos: ajuste<AjustesSonidos>("sonidos"),
         musica: ajuste<AjustesMusica>("musica"),

@@ -6,6 +6,7 @@ import { mountSecretHold } from "@/lib/acceso-secreto";
 import { getAmbient } from "@/lib/audio/ambient";
 import { entered } from "@/lib/audio/entry";
 import { mountCycle } from "@/lib/ciclo";
+import { mountMenuAdmin } from "@/lib/menu-admin";
 import type { AjustesPrevision, MusicaUI, Prevision } from "@/lib/contenido/tipos";
 
 /**
@@ -13,7 +14,8 @@ import type { AjustesPrevision, MusicaUI, Prevision } from "@/lib/contenido/tipo
  * con su sonido) y el regreso a "entrar". Todo viene del contenido (Supabase
  * o src/config): las previsiones, la canción final, cuánto dura la cuenta
  * regresiva y cuánto se ve una foto.
- * También la acción secreta: mantener presionada la cuenta lleva al admin.
+ * También la acción secreta: mantener presionada la cuenta abre el menú del
+ * contador (login, panel, editar, salir).
  */
 export default function Ciclo({
   images,
@@ -37,6 +39,13 @@ export default function Ciclo({
       sonar: (audio, gainDb, offset) => void ambient.sonar("prevision-video", audio, gainDb, offset),
     });
   }, [images, final, prevision]);
-  useEffect(() => mountSecretHold(site.admin), []);
+  useEffect(() => {
+    const menu = mountMenuAdmin(site.admin);
+    const quitar = mountSecretHold(site.admin, (cuenta) => menu.abrir(cuenta));
+    return () => {
+      quitar();
+      menu.destroy();
+    };
+  }, []);
   return null;
 }

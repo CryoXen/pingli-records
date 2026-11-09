@@ -1,0 +1,125 @@
+/* ───────── el menú del contador (login, panel, editar, salir) ───────── */
+
+.menu-admin {
+  position: fixed;
+  z-index: 36;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 180px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 6px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+  touch-action: manipulation;
+}
+
+.menu-admin[hidden] {
+  display: none;
+}
+
+.menu-admin p {
+  margin: 0;
+}
+
+/* las opciones: texto, sin cajas; al pasar, en color de enlace */
+.menu-admin-opcion {
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-admin-opcion:hover,
+.menu-admin-opcion:focus-visible {
+  color: var(--link);
+  outline: none;
+}
+
+.menu-admin-opcion:focus-visible {
+  text-decoration: underline;
+}
+
+/* tu nombre, arriba */
+.menu-admin-nombre {
+  padding: 3px 8px 5px;
+  color: var(--link);
+}
+
+.menu-admin-nota,
+.menu-admin-error {
+  max-width: 240px;
+  padding: 3px 8px;
+  color: var(--ink-2);
+}
+
+.menu-admin-error {
+  color: var(--link);
+}
+
+/* el login, ahí mismo */
+.menu-admin-form {
+  display: grid;
+  gap: 8px;
+  width: min(240px, calc(100vw - 48px));
+  padding: 2px 6px 4px;
+}
+
+.menu-admin-campo {
+  display: grid;
+  gap: 3px;
+  color: var(--ink-2);
+}
+
+.menu-admin-campo input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  /* 16 px: el iPhone no se acerca solo al escribir */
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.menu-admin-campo input:focus {
+  border-color: var(--link);
+  outline: none;
+}
+
+.menu-admin-boton {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--link);
+  background: var(--paper);
+  color: var(--link);
+  font: inherit;
+  cursor: pointer;
+}
+
+.menu-admin-boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.menu-admin-boton:focus-visible {
+  outline: 1px solid var(--link);
+  outline-offset: 3px;
+}
+
+.menu-admin-form .menu-admin-nota,
+.menu-admin-form .menu-admin-error {
+  padding: 0;
+}

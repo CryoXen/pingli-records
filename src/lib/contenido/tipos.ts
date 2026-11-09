@@ -4,7 +4,7 @@
  * y la vista previa.
  */
 import type { BancoDeCarteles } from "@/config/carteles";
-import type { Release } from "@/config/site";
+import type { Artist, Release } from "@/config/site";
 import type { StoreId } from "@/lib/release-panel";
 
 export type Mundo = "claro" | "oscuro";
@@ -47,6 +47,24 @@ export type FilaLanzamiento = {
   tamano: number;
   publicado: boolean;
   orden: number;
+  /** Dónde queda alrededor de su artista (null = en abanico). Lo pone "editar" en el sitio. */
+  desfase_x?: number | null;
+  desfase_y?: number | null;
+};
+
+/**
+ * Lo que el admin le pone a un artista (tabla "artistas"). Los artistas salen
+ * del campo "artista" de los lanzamientos; se relacionan por nombre.
+ */
+export type FilaArtista = {
+  id: string;
+  nombre: string;
+  /** Ruta dentro de la carpeta "portadas". */
+  foto: string | null;
+  /** Lugar y tamaño en el plano (null = el de siempre). */
+  x: number | null;
+  y: number | null;
+  tamano: number | null;
 };
 
 /** Una previsión es una foto o un video (MP4, hasta 30 s, con su sonido). */
@@ -181,6 +199,9 @@ export type AjustesPrevision = {
 };
 
 export type Contenido = {
+  /** Los artistas, fijos alrededor de la esfera. */
+  readonly artists: readonly Artist[];
+  /** Sus proyectos (cada uno con su artistId). */
   readonly releases: readonly Release[];
   readonly carteles: BancoDeCarteles;
   readonly frases: BancoDeFrases;

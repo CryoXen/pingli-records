@@ -3,26 +3,22 @@ import type { Release } from "@/config/site";
 import type { Engine } from "@/engine/engine";
 import { openRelease } from "@/lib/release-panel";
 
-/** Marcos que se muestran por debajo de este tamaño no se alcanzan con Tab: son secretos. */
-const SECRET_SIZE = 10;
-
 /**
- * Lanzamientos en el lienzo. Sin foto son marcos vacíos que muestran el
+ * Los proyectos (lanzamientos). Sin foto son marcos vacíos que muestran el
  * nombre de archivo de su portada, como una imagen que no ha cargado; con
- * foto, la foto llena el cuadro. El motor los posiciona; aquí solo se definen.
+ * foto, la foto llena el cuadro. Aparecen alrededor de su artista al
+ * activarlo (los coloca src/lib/artistas.ts); aquí solo se definen.
  * Al tocar uno se abre su panel a la derecha.
  */
 export function Releases({
   releases,
-  layerRef,
   engineRef,
 }: {
   releases: readonly Release[];
-  layerRef: RefObject<HTMLDivElement | null>;
   engineRef: RefObject<Engine | null>;
 }) {
   return (
-    <div className="world-layer" ref={layerRef}>
+    <>
       {releases.map((r, i) => (
         <button
           key={r.catalog}
@@ -30,7 +26,7 @@ export function Releases({
           className="release"
           data-release={i}
           data-lod="hidden"
-          tabIndex={r.size < SECRET_SIZE ? -1 : 0}
+          tabIndex={-1}
           aria-label={[r.catalog, r.title, r.artist].filter(Boolean).join(", ")}
           onClick={(e) => {
             if (engineRef.current?.wasDrag()) return;
@@ -57,6 +53,6 @@ export function Releases({
           </span>
         </button>
       ))}
-    </div>
+    </>
   );
 }
