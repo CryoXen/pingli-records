@@ -1,8 +1,8 @@
 /**
  * Modo admin del plano: ajustar a mano un artista y sus proyectos.
  *
- * Con el modo admin encendido (evento "pingli:admin") aparece una barra
- * abajo. Al abrir un artista, la barra ofrece "ajustar posición y tamaño", y
+ * Con el modo admin encendido (evento "pingli:admin", que manda "editar" en el
+ * menú del contador: src/lib/menu-admin.ts) aparece una barra abajo. Al abrir un artista, la barra ofrece "ajustar posición y tamaño", y
  * entonces:
  *  - el artista se arrastra a donde sea del plano (sus proyectos lo siguen);
  *  - los proyectos se arrastran libremente alrededor de él;
@@ -223,7 +223,7 @@ export function mountAjuste(o: PlanoArtistas): () => void {
       fila.append(texto("admin · toca un artista para ajustarlo", "ajuste-titulo"));
     }
     if (estado) fila.append(texto(estado, "ajuste-estado"));
-    fila.append(boton("salir del modo admin", () => setAdmin(false), "ajuste-link"));
+    fila.append(boton("dejar de editar", () => setAdmin(false), "ajuste-link"));
     barra.append(fila);
   }
 
@@ -316,6 +316,8 @@ export function mountAjuste(o: PlanoArtistas): () => void {
     }
   };
   const onTecla = (ev: KeyboardEvent) => {
+    // con el menú del contador abierto, Esc solo cierra el menú
+    if (document.documentElement.hasAttribute("data-menu-admin")) return;
     if (ev.key === "Escape" && ajustando >= 0) {
       ev.stopPropagation();
       cancelar();

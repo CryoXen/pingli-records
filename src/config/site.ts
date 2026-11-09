@@ -291,11 +291,12 @@ export const site = {
 
   /**
    * Panel de admin: frases, lanzamientos y previsiones. Se entra por la URL
-   * o manteniendo presionada la cuenta 3:33 (abajo a la derecha). Siempre
-   * pide usuario y contraseña (Supabase).
+   * o desde el menú que abre la cuenta 3:33 (abajo a la derecha) al
+   * mantenerla presionada: login, ingresar a panel, editar (el plano) y
+   * salir. Siempre pide usuario y contraseña (Supabase).
    */
   admin: {
-    /** A dónde lleva la acción secreta. */
+    /** A dónde lleva "ingresar a panel". */
     path: "/admin",
     /** Segundos que hay que mantener presionada la cuenta. 0 = sin acción secreta. */
     hold: 3.33,

@@ -85,6 +85,8 @@ exception when duplicate_object then null; end $$;
 create table if not exists public.admins (
   user_id uuid primary key references auth.users (id) on delete cascade
 );
+-- el nombre que muestra el menú del contador al iniciar sesión (chris, henry)
+alter table public.admins add column if not exists nombre text;
 
 create index if not exists frases_mundo on public.frases (banco, mundo, orden);
 create index if not exists lanzamientos_orden on public.lanzamientos (orden);

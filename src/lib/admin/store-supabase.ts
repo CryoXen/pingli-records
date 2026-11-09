@@ -8,7 +8,8 @@ import type { AdminStore, Carpeta } from "./store";
 
 let cliente: SupabaseClient | null = null;
 
-function sb(): SupabaseClient {
+/** El cliente de Supabase del navegador (también lo usa el menú del contador: misma sesión). */
+export function sb(): SupabaseClient {
   if (cliente) return cliente;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

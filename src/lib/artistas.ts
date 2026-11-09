@@ -304,6 +304,8 @@ export function mountArtistas(
     window,
     "keydown",
     (ev) => {
+      // con el menú del contador abierto, Esc solo cierra el menú
+      if (document.documentElement.hasAttribute("data-menu-admin")) return;
       if (ev.key === "Escape" && abierto >= 0 && !ajustando && !hooks.panelOpen()) cerrar();
     },
     { capture: true },
@@ -314,7 +316,7 @@ export function mountArtistas(
     on(stage, "click", (ev) => {
       if (abierto < 0 || ajustando || hooks.wasDrag()) return;
       const t = ev.target as Element;
-      if (t.closest("[data-release],[data-artista],.phrase,.zona,.panel,.ajuste-barra,button,a,input")) return;
+      if (t.closest("[data-release],[data-artista],[data-cycle-clock],.phrase,.zona,.panel,.ajuste-barra,.menu-admin,button,a,input")) return;
       cerrar();
     });
   }

@@ -1,15 +1,16 @@
 /**
- * La acción secreta para llegar al panel de admin: mantener presionada la
- * cuenta 3:33 (abajo a la derecha) 3.33 segundos.
+ * La acción secreta: mantener presionada la cuenta 3:33 (abajo a la
+ * derecha) 3.33 segundos.
  *
  * Mientras se mantiene, los dígitos se deshacen por la rampa de la figura
  * ASCII (* + ^ ; : , .), uno tras otro, hasta quedar en blanco; entonces se
- * abre el admin (que de todos modos pide usuario y contraseña). Si se suelta
- * antes, la cuenta vuelve a la normalidad. Igual con mouse que con el dedo.
+ * abre el menú del contador (src/lib/menu-admin.ts: login, panel, editar,
+ * salir). Si se suelta antes, la cuenta vuelve a la normalidad. Igual con
+ * mouse que con el dedo.
  */
 
 export type SecretSettings = {
-  /** A dónde lleva (la URL del admin). */
+  /** La URL del panel de admin (a dónde lleva "ingresar a panel"). */
   readonly path: string;
   /** Segundos que hay que mantenerla. 0 = sin acción secreta. */
   readonly hold: number;
@@ -17,7 +18,7 @@ export type SecretSettings = {
 
 const RAMP = "*+^;:,. ";
 
-export function mountSecretHold(s: SecretSettings): () => void {
+export function mountSecretHold(s: SecretSettings, alCompletar: (cuenta: HTMLElement) => void): () => void {
   if (!(s.hold > 0)) return () => {};
   let el: HTMLElement | null = null;
   let raf = 0;
@@ -56,10 +57,9 @@ export function mountSecretHold(s: SecretSettings): () => void {
       raf = requestAnimationFrame(step);
       return;
     }
+    const cuenta = el;
     stop();
-    // aviso cancelable (la vista previa lo usa para encender el modo admin sin salir de la página)
-    const aviso = new CustomEvent("pingli:acceso", { cancelable: true });
-    if (window.dispatchEvent(aviso)) window.location.assign(s.path);
+    if (cuenta) alCompletar(cuenta);
   }
 
   function onDown(e: PointerEvent) {
