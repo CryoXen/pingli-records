@@ -57,7 +57,9 @@ export function mountSecretHold(s: SecretSettings): () => void {
       return;
     }
     stop();
-    window.location.assign(s.path);
+    // aviso cancelable (la vista previa lo usa para encender el modo admin sin salir de la página)
+    const aviso = new CustomEvent("pingli:acceso", { cancelable: true });
+    if (window.dispatchEvent(aviso)) window.location.assign(s.path);
   }
 
   function onDown(e: PointerEvent) {

@@ -30,3 +30,143 @@
 .world-layer .release-caption {
   background: var(--paper);
 }
+
+/* ───────── modo admin: ajustar órbita, lugar y tamaño ───────── */
+
+.ajuste {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ajuste-punto,
+.ajuste-esquina {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: var(--paper);
+  border: 1px solid var(--link);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* más fácil de agarrar con el dedo */
+.ajuste-punto::before,
+.ajuste-esquina::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
+.ajuste-punto {
+  border-radius: 50%;
+}
+
+.ajuste-esquina {
+  cursor: nwse-resize;
+}
+
+.ajuste-punto[data-arrastrando],
+.ajuste-esquina[data-arrastrando] {
+  background: var(--link);
+}
+
+.ajuste-elipse {
+  fill: none;
+  stroke: var(--link);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+  vector-effect: non-scaling-stroke;
+}
+
+/* mientras se ajusta, los cuadros se arrastran */
+:root[data-ajustando] .artista[data-selected],
+:root[data-ajustando] .release:not(.artista):not([data-lod="hidden"]) {
+  cursor: move;
+  touch-action: none;
+}
+
+:root[data-ajustando] [data-arrastrando] {
+  cursor: grabbing;
+}
+
+.ajuste-barra {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 35;
+  display: grid;
+  gap: 8px;
+  width: min(760px, calc(100% - 32px));
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ajuste-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.ajuste-titulo {
+  color: var(--link);
+}
+
+.ajuste-datos,
+.ajuste-ayuda,
+.ajuste-estado {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ajuste-boton {
+  padding: 6px 10px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ajuste-primario {
+  border-color: var(--link);
+  color: var(--link);
+}
+
+.ajuste-boton:hover,
+.ajuste-boton:focus-visible {
+  border-color: var(--link);
+  color: var(--link);
+  outline: none;
+}
+
+.ajuste-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ocultos de verdad (display: grid les ganaría al atributo hidden) */
+.ajuste[hidden],
+.ajuste-barra[hidden] {
+  display: none;
+}

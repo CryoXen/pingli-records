@@ -46,6 +46,12 @@ export type Release = {
   size: number;
   /** Ruta a la portada cuando exista (sin usar: la foto va en `image`). */
   cover?: string;
+  /**
+   * Dónde queda respecto a su artista al desplegarse (unidades del mundo,
+   * desde el centro del artista). Sin valor: en el abanico automático.
+   * Se ajusta arrastrándolo en el modo admin.
+   */
+  offset?: { x: number; y: number } | null;
 };
 
 export type AsciiShape = "sphere" | "torus";

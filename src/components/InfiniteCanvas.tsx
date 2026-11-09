@@ -9,6 +9,7 @@ import { entered } from "@/lib/audio/entry";
 import type { Contenido } from "@/lib/contenido/tipos";
 import { mountWall } from "@/lib/muro";
 import { mountOrbitas } from "@/lib/orbitas";
+import { mountAjuste } from "@/lib/orbitas-ajuste";
 import { mountPhrases } from "@/lib/phrases";
 import { closeRelease, connectCamera, releasePanelInset } from "@/lib/release-panel";
 import { currentSide, setSide } from "@/lib/side";
@@ -58,6 +59,8 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       panelOpen: () => !!document.querySelector(".panel[data-open]"),
       closePanel: closeRelease,
     });
+    // modo admin: ajustar a mano la órbita, el lugar y el tamaño (se enciende con el evento "pingli:admin")
+    const quitarAjuste = mountAjuste(orbitas, (x, y, scale) => engineRef.current?.flyTo(x, y, scale));
 
     // los carteles que pueden brotar (sin las pistas del muro mientras esté apagado)
     const leibles = cartelesSegun(site.wall.enabled, contenido.carteles);
@@ -155,6 +158,7 @@ export default function InfiniteCanvas({ contenido }: { contenido: Contenido }) 
       field?.destroy();
       zone?.destroy();
       wall?.destroy();
+      quitarAjuste();
       orbitas.destroy();
       connectCamera(null);
       tl.kill();

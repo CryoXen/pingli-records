@@ -7,7 +7,8 @@
  *  - se desacelera, con una transición suave, hasta casi detenerse
  *    (site.orbits.selectedSpeed); al cerrarlo recupera su ritmo igual de suave;
  *  - sus proyectos salen de él y se despliegan alrededor, en abanico hacia
- *    afuera (lejos de la esfera), unidos a él con líneas de 1 px;
+ *    afuera (lejos de la esfera) o donde el admin los haya puesto (offset),
+ *    unidos a él con líneas de 1 px;
  *  - la cámara encuadra al artista con sus proyectos.
  * Tocar un proyecto abre su panel (como siempre). El artista se cierra
  * tocándolo otra vez, con Esc (si el panel está cerrado), tocando el plano
@@ -18,11 +19,12 @@
  * etiquetas encuadran al artista).
  *
  * Todo se calcula en cada cuadro del motor (onFrame) y se coloca en pantalla
- * igual que el motor colocaba los lanzamientos.
+ * igual que el motor colocaba los lanzamientos. Las órbitas y los tamaños son
+ * copias que se pueden cambiar en vivo (modo admin: src/lib/orbitas-ajuste.ts).
  */
-import type { Artist, Release } from "@/config/site";
+import type { Artist, Orbit, Release } from "@/config/site";
 
-type Cam = {
+export type Cam = {
   x: number;
   y: number;
   scale: number;
@@ -57,12 +59,14 @@ export type OrbitHooks = {
   closePanel: () => void;
 };
 
-type Estado = {
-  a: Artist;
-  el: HTMLElement | null;
-  /** Ángulo sobre la elipse (rad) y velocidad angular normal (rad/s). */
+export type Estado = {
+  readonly a: Artist;
+  readonly el: HTMLElement | null;
+  /** La órbita y el lado del cuadro, en vivo (se pueden ajustar). */
+  orb: Orbit;
+  size: number;
+  /** Ángulo sobre la elipse (rad). */
   phi: number;
-  w: number;
   x: number;
   y: number;
   /** Fracción de la velocidad normal, con su transición. */
@@ -70,22 +74,32 @@ type Estado = {
   velFrom: number;
   velTo: number;
   velT0: number;
+  /** Quieto del todo (mientras se ajusta). */
+  fijo: boolean;
   /** Despliegue de los proyectos: 0 recogidos, 1 desplegados. */
   abre: number;
   abreFrom: number;
   abreTo: number;
   abreT0: number;
   abreDur: number;
-  proyectos: number[];
+  readonly proyectos: number[];
 };
 
-const RAD = Math.PI / 180;
+export const RAD = Math.PI / 180;
 /** Proyectos más chicos que esto son secretos: no cuentan para el espacio del abanico. */
-const SECRETO = 10;
+export const SECRETO = 10;
 
 const suave = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
 const sale = (t: number) => 1 - Math.pow(1 - t, 3); // power3.out
 const entra = (t: number) => t * t; // power2.in
+
+/** Un punto de la elipse de una órbita (centro en la esfera). */
+export function puntoDeOrbita(o: Orbit, phi: number) {
+  const ex = o.a * Math.cos(phi);
+  const ey = o.b * Math.sin(phi);
+  const t = o.tilt * RAD;
+  return { x: ex * Math.cos(t) - ey * Math.sin(t), y: ex * Math.sin(t) + ey * Math.cos(t) };
+}
 
 export function mountOrbitas(
   layer: HTMLElement,
@@ -100,19 +114,24 @@ export function mountOrbitas(
   let reloj = 0;
   let abierto = -1;
   let cam: Cam | null = null;
+  /** Mientras se ajusta, el plano vacío no cierra al artista ni se abren paneles. */
+  let ajustando = false;
   const spots: Spot[] = [];
+  const alCuadro: Array<(c: Cam) => void> = [];
 
   const estados: Estado[] = artists.map((a, i) => ({
     a,
     el: layer.querySelector<HTMLElement>(`[data-artista="${i}"]`),
+    orb: { ...a.orbit },
+    size: a.size,
     phi: a.orbit.phase * RAD,
-    w: (a.orbit.dir * 2 * Math.PI) / Math.max(1, a.orbit.period),
     x: 0,
     y: 0,
     vel: 1,
     velFrom: 1,
     velTo: 1,
     velT0: 0,
+    fijo: false,
     abre: 0,
     abreFrom: 0,
     abreTo: 0,
@@ -136,24 +155,18 @@ export function mountOrbitas(
     }
   }
 
-  const posicion = (e: Estado, phi: number) => {
-    const { a, b, tilt } = e.a.orbit;
-    const ex = a * Math.cos(phi);
-    const ey = b * Math.sin(phi);
-    const t = tilt * RAD;
-    return { x: ex * Math.cos(t) - ey * Math.sin(t), y: ex * Math.sin(t) + ey * Math.cos(t) };
-  };
-
-  /** Dónde queda cada proyecto desplegado, alrededor de su artista (en abanico hacia afuera). */
+  /** Dónde queda cada proyecto desplegado: donde lo puso el admin, o en abanico hacia afuera. */
   function lugares(e: Estado, x: number, y: number) {
     const n = e.proyectos.length;
     const tam = e.proyectos.map((j) => releases[j].size).filter((z) => z >= SECRETO);
-    const maxP = tam.length ? Math.max(...tam) : e.a.size * 0.8;
-    const gap = s.gap * e.a.size;
+    const maxP = tam.length ? Math.max(...tam) : e.size * 0.8;
+    const gap = s.gap * e.size;
     const paso = n > 1 ? Math.min(s.spread, s.fan / (n - 1)) * RAD : 0;
-    const R = Math.max(e.a.size / 2 + maxP / 2 + gap, n > 1 ? (maxP + gap * 0.6) / (2 * Math.sin(paso / 2)) : 0);
+    const R = Math.max(e.size / 2 + maxP / 2 + gap, n > 1 ? (maxP + gap * 0.6) / (2 * Math.sin(paso / 2)) : 0);
     const afuera = Math.hypot(x, y) > 1 ? Math.atan2(y, x) : -Math.PI / 2;
     return e.proyectos.map((j, k) => {
+      const off = releases[j].offset;
+      if (off) return { j, x: x + off.x, y: y + off.y };
       const ang = afuera + (k - (n - 1) / 2) * paso;
       return { j, x: x + R * Math.cos(ang), y: y + R * Math.sin(ang) };
     });
@@ -196,15 +209,11 @@ export function mountOrbitas(
       l.style.display = "none";
       return;
     }
-    const x1 = c.toScreenX(ax + ux * tA);
-    const y1 = c.toScreenY(ay + uy * tA);
-    const x2 = c.toScreenX(px - ux * tP);
-    const y2 = c.toScreenY(py - uy * tP);
     l.style.display = "";
-    l.setAttribute("x1", x1.toFixed(1));
-    l.setAttribute("y1", y1.toFixed(1));
-    l.setAttribute("x2", x2.toFixed(1));
-    l.setAttribute("y2", y2.toFixed(1));
+    l.setAttribute("x1", c.toScreenX(ax + ux * tA).toFixed(1));
+    l.setAttribute("y1", c.toScreenY(ay + uy * tA).toFixed(1));
+    l.setAttribute("x2", c.toScreenX(px - ux * tP).toFixed(1));
+    l.setAttribute("y2", c.toScreenY(py - uy * tP).toFixed(1));
     l.style.opacity = alpha >= 1 ? "" : alpha.toFixed(3);
   }
 
@@ -216,8 +225,8 @@ export function mountOrbitas(
       // la velocidad, con su transición suave
       const tv = Math.min(1, (reloj - e.velT0) / Math.max(0.01, s.ease / (reducedMotion ? 3 : 1)));
       e.vel = e.velFrom + (e.velTo - e.velFrom) * suave(tv);
-      e.phi += e.w * e.vel * motion * dt;
-      const p = posicion(e, e.phi);
+      if (!e.fijo) e.phi += ((e.orb.dir * 2 * Math.PI) / Math.max(1, e.orb.period)) * e.vel * motion * dt;
+      const p = puntoDeOrbita(e.orb, e.phi);
       e.x = p.x;
       e.y = p.y;
 
@@ -226,8 +235,8 @@ export function mountOrbitas(
       const k = e.abreTo > e.abreFrom ? sale(ta) : entra(ta);
       e.abre = e.abreFrom + (e.abreTo - e.abreFrom) * k;
 
-      if (e.el) colocar(e.el, e.x, e.y, e.a.size, c);
-      spots.push({ x: e.x, y: e.y, size: e.a.size });
+      if (e.el) colocar(e.el, e.x, e.y, e.size, c);
+      spots.push({ x: e.x, y: e.y, size: e.size });
 
       const slots = e.abre > 0.001 ? lugares(e, e.x, e.y) : null;
       let marcado: string | undefined;
@@ -259,7 +268,7 @@ export function mountOrbitas(
           const t = e.abre > 0.5 ? 0 : -1;
           if (el.tabIndex !== t) el.tabIndex = r.size < SECRETO ? -1 : t;
         }
-        if (l) unir(l, e.x, e.y, e.a.size, px, py, size, e.abre, c);
+        if (l) unir(l, e.x, e.y, e.size, px, py, size, e.abre, c);
       }
       // si una etiqueta del panel enciende alguno de sus proyectos, el artista también se marca
       if (e.el) {
@@ -267,6 +276,7 @@ export function mountOrbitas(
         else if (e.el.dataset.tagged) delete e.el.dataset.tagged;
       }
     }
+    for (const f of alCuadro) f(c);
   }
 
   function transicion(e: Estado, vel: number, abre: number) {
@@ -283,10 +293,10 @@ export function mountOrbitas(
   function encuadrar(e: Estado) {
     if (!cam) return;
     const slots = lugares(e, e.x, e.y);
-    let l = e.x - e.a.size / 2;
-    let r = e.x + e.a.size / 2;
-    let t = e.y - e.a.size / 2;
-    let b = e.y + e.a.size / 2;
+    let l = e.x - e.size / 2;
+    let r = e.x + e.size / 2;
+    let t = e.y - e.size / 2;
+    let b = e.y + e.size / 2;
     for (const sl of slots) {
       const h = Math.max(releases[sl.j].size, SECRETO) / 2;
       l = Math.min(l, sl.x - h);
@@ -301,6 +311,8 @@ export function mountOrbitas(
     hooks.fly((l + r) / 2 + inset / 2 / scale, (t + b) / 2 + 12 / scale, scale);
   }
 
+  const avisar = () => window.dispatchEvent(new CustomEvent("pingli:artista", { detail: { index: abierto } }));
+
   function abrir(i: number) {
     const e = estados[i];
     if (!e) return;
@@ -312,6 +324,7 @@ export function mountOrbitas(
       e.el.setAttribute("aria-expanded", "true");
     }
     encuadrar(e);
+    avisar();
   }
 
   function cerrar(cerrarPanel = true) {
@@ -324,9 +337,11 @@ export function mountOrbitas(
       e.el.setAttribute("aria-expanded", "false");
     }
     if (cerrarPanel && hooks.panelOpen()) hooks.closePanel();
+    avisar();
   }
 
   function toggle(i: number) {
+    if (ajustando) return;
     if (abierto === i) cerrar();
     else abrir(i);
   }
@@ -346,8 +361,8 @@ export function mountOrbitas(
       toggle(i);
     });
     on(el, "focus", () => {
-      if (!el.matches(":focus-visible") || !cam) return;
-      const target = (Math.min(cam.w - hooks.panelInset(), cam.h) * 0.42) / e.a.size;
+      if (ajustando || !el.matches(":focus-visible") || !cam) return;
+      const target = (Math.min(cam.w - hooks.panelInset(), cam.h) * 0.42) / e.size;
       hooks.fly(e.x, e.y, target);
     });
   }
@@ -356,7 +371,7 @@ export function mountOrbitas(
     window,
     "keydown",
     (ev) => {
-      if (ev.key === "Escape" && abierto >= 0 && !hooks.panelOpen()) cerrar();
+      if (ev.key === "Escape" && abierto >= 0 && !ajustando && !hooks.panelOpen()) cerrar();
     },
     { capture: true },
   );
@@ -364,9 +379,9 @@ export function mountOrbitas(
   const stage = layer.parentElement;
   if (stage) {
     on(stage, "click", (ev) => {
-      if (abierto < 0 || hooks.wasDrag()) return;
+      if (abierto < 0 || ajustando || hooks.wasDrag()) return;
       const t = ev.target as Element;
-      if (t.closest("[data-release],[data-artista],.phrase,.zona,.panel,button,a,input")) return;
+      if (t.closest("[data-release],[data-artista],.phrase,.zona,.panel,.ajuste-barra,button,a,input")) return;
       cerrar();
     });
   }
@@ -380,5 +395,32 @@ export function mountOrbitas(
       quitar.forEach((f) => f());
       lineaDe.forEach((l) => l.remove());
     },
+    /** Para el modo admin (orbitas-ajuste.ts). */
+    interno: {
+      estados,
+      releases,
+      relEls,
+      layer,
+      lineas,
+      lugares,
+      encuadrar,
+      cam: () => cam,
+      abierto: () => abierto,
+      setAjustando(v: boolean) {
+        ajustando = v;
+      },
+      /** Se llama en cada cuadro, después de colocar todo. */
+      alCuadro(f: (c: Cam) => void) {
+        alCuadro.push(f);
+        return () => alCuadro.splice(alCuadro.indexOf(f), 1);
+      },
+      /** Frena del todo (o vuelve a frenar a la velocidad de abierto). */
+      fijar(i: number, fijo: boolean) {
+        const e = estados[i];
+        if (e) e.fijo = fijo;
+      },
+    },
   };
 }
+
+export type Orbitas = ReturnType<typeof mountOrbitas>;
