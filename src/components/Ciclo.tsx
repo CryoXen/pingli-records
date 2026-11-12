@@ -7,7 +7,11 @@ import { getAmbient } from "@/lib/audio/ambient";
 import { entered } from "@/lib/audio/entry";
 import { mountCycle } from "@/lib/ciclo";
 import { mountMenuAdmin } from "@/lib/menu-admin";
-import type { AjustesPrevision, MusicaUI, Prevision } from "@/lib/contenido/tipos";
+import type {
+  AjustesPrevision,
+  MusicaUI,
+  Prevision,
+} from "@/lib/contenido/tipos";
 
 /**
  * El ciclo de 3:33: la previsión (una foto con la canción final, o un video
@@ -28,15 +32,22 @@ export default function Ciclo({
 }) {
   useEffect(() => {
     const ambient = getAmbient(site.audio);
-    const ciclo = { ...site.cycle, duration: prevision.duracionCiclo, hold: prevision.duracionFoto };
+    const ciclo = {
+      ...site.cycle,
+      duration: prevision.duracionCiclo,
+      hold: prevision.duracionFoto,
+      palabras: { ...site.cycle.palabras, fuentes: prevision.fuentes },
+    };
     return mountCycle(ciclo, images, entered, () => ambient.stop(), {
       // la canción final se descarga junto con la previsión y suena cuando aparece una foto
       prepare: () => final && void ambient.loadCue(final.src),
-      show: () => final && void ambient.playCue(final.src, final.gainDb, final.inicio),
+      show: () =>
+        final && void ambient.playCue(final.src, final.gainDb, final.inicio),
       // los videos: su sonido va aparte, por el mismo motor (respeta "vol")
       decodificar: (data) => ambient.decodificar(data),
       silenciar: () => ambient.silenciar(),
-      sonar: (audio, gainDb, offset) => void ambient.sonar("prevision-video", audio, gainDb, offset),
+      sonar: (audio, gainDb, offset) =>
+        void ambient.sonar("prevision-video", audio, gainDb, offset),
     });
   }, [images, final, prevision]);
   useEffect(() => {

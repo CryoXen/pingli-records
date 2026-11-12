@@ -23,7 +23,10 @@ import type {
 } from "./tipos";
 
 /** URL pública de un archivo guardado en una carpeta ("portadas", "previsiones" o "sonidos"). */
-export type UrlPublica = (carpeta: "portadas" | "previsiones" | "sonidos", ruta: string) => string;
+export type UrlPublica = (
+  carpeta: "portadas" | "previsiones" | "sonidos",
+  ruta: string,
+) => string;
 
 const MUNDOS: readonly Mundo[] = ["claro", "oscuro"];
 const TIPOS: readonly TipoSonido[] = ["proyecto", "frase"];
@@ -31,20 +34,36 @@ const TIPOS: readonly TipoSonido[] = ["proyecto", "frase"];
 /** Los sonidos como vienen en src/config/site.ts (antes de tocar nada en el admin). */
 export function sonidosPorDefecto(): AjustesSonidos {
   const fx = site.audio.sfx;
-  const slot = (x: { gainDb: number } | null) => ({ ruta: null, nombre: null, activo: !!x, gainDb: x?.gainDb ?? 0, inicio: 0 });
+  const slot = (x: { gainDb: number } | null) => ({
+    ruta: null,
+    nombre: null,
+    activo: !!x,
+    gainDb: x?.gainDb ?? 0,
+    inicio: 0,
+  });
   return {
     volumen: fx.volume,
-    proyecto: { claro: slot(fx.proyecto.claro), oscuro: slot(fx.proyecto.oscuro) },
+    proyecto: {
+      claro: slot(fx.proyecto.claro),
+      oscuro: slot(fx.proyecto.oscuro),
+    },
     frase: { claro: slot(fx.frase.claro), oscuro: slot(fx.frase.oscuro) },
   };
 }
 
 /** Completa lo que falte (p. ej. un sonido que se agregue después) con lo de site.ts. */
-export function completarSonidos(a: Partial<AjustesSonidos> | null | undefined): AjustesSonidos {
+export function completarSonidos(
+  a: Partial<AjustesSonidos> | null | undefined,
+): AjustesSonidos {
   const base = sonidosPorDefecto();
   if (!a) return base;
-  const out: AjustesSonidos = { ...base, volumen: typeof a.volumen === "number" ? a.volumen : base.volumen };
-  for (const t of TIPOS) for (const m of MUNDOS) out[t] = { ...out[t], [m]: { ...base[t][m], ...(a[t]?.[m] ?? {}) } };
+  const out: AjustesSonidos = {
+    ...base,
+    volumen: typeof a.volumen === "number" ? a.volumen : base.volumen,
+  };
+  for (const t of TIPOS)
+    for (const m of MUNDOS)
+      out[t] = { ...out[t], [m]: { ...base[t][m], ...(a[t]?.[m] ?? {}) } };
   return out;
 }
 
@@ -55,12 +74,20 @@ export function sonidosUI(a: AjustesSonidos, url: UrlPublica): SonidosUI {
     const s = a[t][m];
     const original = fx[t][m];
     if (!s.activo) return null;
-    if (s.ruta) return { src: url("sonidos", s.ruta), gainDb: s.gainDb, inicio: s.inicio };
+    if (s.ruta)
+      return {
+        src: url("sonidos", s.ruta),
+        gainDb: s.gainDb,
+        inicio: s.inicio,
+      };
     return original ? { src: original.src, gainDb: s.gainDb, inicio: 0 } : null;
   };
   return {
     volumen: a.volumen,
-    proyecto: { claro: uno("proyecto", "claro"), oscuro: uno("proyecto", "oscuro") },
+    proyecto: {
+      claro: uno("proyecto", "claro"),
+      oscuro: uno("proyecto", "oscuro"),
+    },
     frase: { claro: uno("frase", "claro"), oscuro: uno("frase", "oscuro") },
   };
 }
@@ -88,7 +115,15 @@ export function cancionOriginal(m: Mundo): CancionFondo {
 /** La canción final original (site.cycle.song). */
 export function finalOriginal(): AjustesMusica["final"] {
   const s = site.cycle.song;
-  return { ruta: null, nombre: null, activo: !!s, gainDb: s?.gainDb ?? 0, auto: s?.gainDb ?? 0, inicio: 0, duracion: null };
+  return {
+    ruta: null,
+    nombre: null,
+    activo: !!s,
+    gainDb: s?.gainDb ?? 0,
+    auto: s?.gainDb ?? 0,
+    inicio: 0,
+    duracion: null,
+  };
 }
 
 export function musicaPorDefecto(): AjustesMusica {
@@ -102,17 +137,29 @@ export function musicaPorDefecto(): AjustesMusica {
 }
 
 /** Completa lo que falte con lo de site.ts; la original siempre está en la lista. */
-export function completarMusica(a: Partial<AjustesMusica> | null | undefined): AjustesMusica {
+export function completarMusica(
+  a: Partial<AjustesMusica> | null | undefined,
+): AjustesMusica {
   const base = musicaPorDefecto();
   if (!a) return base;
   const fondo = { ...base.fondo };
   for (const m of MUNDOS) {
     const f = a.fondo?.[m];
     if (!f) continue;
-    const lista = Array.isArray(f.canciones) ? f.canciones.filter((c) => c && typeof c.id === "string") : [];
+    const lista = Array.isArray(f.canciones)
+      ? f.canciones.filter((c) => c && typeof c.id === "string")
+      : [];
     const original = lista.find((c) => c.id === "original");
-    const canciones = [{ ...cancionOriginal(m), ...(original ?? {}), ruta: null }, ...lista.filter((c) => c.id !== "original")];
-    const activa = f.activa === null ? null : canciones.some((c) => c.id === f.activa) ? (f.activa as string) : "original";
+    const canciones = [
+      { ...cancionOriginal(m), ...(original ?? {}), ruta: null },
+      ...lista.filter((c) => c.id !== "original"),
+    ];
+    const activa =
+      f.activa === null
+        ? null
+        : canciones.some((c) => c.id === f.activa)
+          ? (f.activa as string)
+          : "original";
     fondo[m] = { activa, canciones };
   }
   return { fondo, final: { ...base.final, ...(a.final ?? {}) } };
@@ -124,8 +171,16 @@ export function musicaUI(a: AjustesMusica, url: UrlPublica): MusicaUI {
     const f = a.fondo[m];
     const c = f.canciones.find((x) => x.id === f.activa);
     if (!c) return null;
-    const src = c.ruta ? url("sonidos", c.ruta) : site.audio.tracks[LADO[m]].src;
-    return { src, title: c.nombre, gainDb: c.gainDb, inicio: c.inicio, fin: c.fin };
+    const src = c.ruta
+      ? url("sonidos", c.ruta)
+      : site.audio.tracks[LADO[m]].src;
+    return {
+      src,
+      title: c.nombre,
+      gainDb: c.gainDb,
+      inicio: c.inicio,
+      fin: c.fin,
+    };
   };
   const f = a.final;
   const original = site.cycle.song;
@@ -150,18 +205,33 @@ const entre = (v: unknown, r: { min: number; max: number }, otro: number) => {
   return Number.isFinite(n) ? Math.min(r.max, Math.max(r.min, n)) : otro;
 };
 
-export function completarPrevision(a: Partial<AjustesPrevision> | null | undefined): AjustesPrevision {
+export function completarPrevision(
+  a: Partial<AjustesPrevision> | null | undefined,
+): AjustesPrevision {
   return {
     duracionCiclo: entre(a?.duracionCiclo, DURACION_CICLO, site.cycle.duration),
     duracionFoto: entre(a?.duracionFoto, DURACION_FOTO, site.cycle.hold),
+    fuentes:
+      Array.isArray(a?.fuentes) && a.fuentes.length
+        ? a.fuentes.filter((x) => typeof x === "string")
+        : null,
   };
 }
 
 /** "mw52s1nnuyj9-glitch-1.png" → "glitch-1.png" (las rutas llevan un id al frente para no repetirse). */
-export const nombreDeRuta = (ruta: string) => ruta.split("/").pop()!.replace(/^[0-9a-z]{10,14}-(?=.+\.)/, "");
+export const nombreDeRuta = (ruta: string) =>
+  ruta
+    .split("/")
+    .pop()!
+    .replace(/^[0-9a-z]{10,14}-(?=.+\.)/, "");
 
 /** Agrupa por tema, respetando el orden. */
-function porTema<T>(filas: readonly FilaFrase[], mundo: Mundo, banco: FilaFrase["banco"], f: (r: FilaFrase) => T) {
+function porTema<T>(
+  filas: readonly FilaFrase[],
+  mundo: Mundo,
+  banco: FilaFrase["banco"],
+  f: (r: FilaFrase) => T,
+) {
   const out: Record<string, T[]> = {};
   for (const r of filas) {
     if (r.mundo !== mundo || r.banco !== banco || !r.activo) continue;
@@ -200,12 +270,19 @@ export function filasAContenido(
     prevision?: Partial<AjustesPrevision> | null;
   } = {},
 ): Contenido {
-  const orden = <T extends { orden: number }>(a: readonly T[]) => [...a].sort((x, y) => x.orden - y.orden);
+  const orden = <T extends { orden: number }>(a: readonly T[]) =>
+    [...a].sort((x, y) => x.orden - y.orden);
   const fs = orden(frases);
   const [claroC, oscuroC] = MUNDOS.map((m) =>
-    porTema<Cartel>(fs, m, "carteles", (r) => ({ id: r.id, icono: r.icono ?? "puntos", texto: r.texto })),
+    porTema<Cartel>(fs, m, "carteles", (r) => ({
+      id: r.id,
+      icono: r.icono ?? "puntos",
+      texto: r.texto,
+    })),
   );
-  const [claroF, oscuroF] = MUNDOS.map((m) => porTema<string>(fs, m, "frases", (r) => r.texto));
+  const [claroF, oscuroF] = MUNDOS.map((m) =>
+    porTema<string>(fs, m, "frases", (r) => r.texto),
+  );
   // los artistas salen de los lanzamientos publicados; de la tabla, su foto, lugar y tamaño
   const { artists, releases } = armarArtistas(
     orden(lanzamientos)
@@ -227,7 +304,9 @@ export function filasAContenido(
         rareza: p.rareza,
         nombre: p.nombre ?? nombreDeRuta(p.ruta),
         medio: p.medio === "video" ? "video" : "imagen",
-        ...(p.medio === "video" ? { duracion: p.duracion ?? undefined, ganancia: p.ganancia ?? 0 } : {}),
+        ...(p.medio === "video"
+          ? { duracion: p.duracion ?? undefined, ganancia: p.ganancia ?? 0 }
+          : {}),
       })),
     sonidos: sonidosUI(completarSonidos(ajustes.sonidos), url),
     musica: musicaUI(completarMusica(ajustes.musica), url),

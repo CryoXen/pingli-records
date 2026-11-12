@@ -1,6 +1,8 @@
 /**
  * El nombre que muta: "pingli records" (abajo a la izquierda) se vuelve el
- * logo y regresa, en ciclo.
+ * logo y regresa. Con modo "clic" (el de ahora) cambia cada vez que se toca
+ * el nombre o el logo (también con Enter o espacio); con "ciclo", solo, cada
+ * tantos segundos.
  *
  * El texto y el logo están trazados como contornos emparejados punto por
  * punto (src/lib/logo-datos.json, hecho con scripts/logo/). Dos estilos:
@@ -18,9 +20,11 @@
 type Datos = { linea: number; pares: { t: number[]; l: number[] }[] };
 
 export type MutanteSettings = {
+  /** "clic": cambia al tocarlo; "ciclo": cambia solo (texto y logo, en segundos). */
+  readonly modo: "clic" | "ciclo";
   /** "fundido": sin deformar, uno se apaga y el otro aparece (no se usa por ahora). */
   readonly estilo: "ascii" | "trazos" | "fundido";
-  /** Segundos como texto, como logo y lo que dura cada mutación. */
+  /** Segundos como texto y como logo (solo en "ciclo") y lo que dura cada mutación. */
   readonly texto: number;
   readonly logo: number;
   readonly mutacion: number;
@@ -53,6 +57,31 @@ export function mountWordmarkMutante(h1: HTMLElement, s: MutanteSettings, listo:
   // el texto de verdad: se esconde sin mover nada mientras se ve el dibujo
   const letras = h1.querySelector<HTMLElement>(".wordmark-letras");
   if (!letras) return () => {};
+
+  // —— modo "clic": tocar el nombre (o el logo) lo cambia; el plano no se entera
+  let alternar: (() => void) | null = null;
+  const quitarClic: Array<() => void> = [];
+  if (s.modo === "clic") {
+    h1.dataset.clic = "";
+    h1.tabIndex = 0;
+    const on = <K extends keyof HTMLElementEventMap>(ev: K, fn: (e: HTMLElementEventMap[K]) => void) => {
+      h1.addEventListener(ev, fn);
+      quitarClic.push(() => h1.removeEventListener(ev, fn));
+    };
+    // sin arrastrar el plano, sin acercarse con doble clic, sin cerrar al artista abierto
+    on("pointerdown", (e) => e.stopPropagation());
+    on("dblclick", (e) => e.stopPropagation());
+    on("click", (e) => {
+      e.stopPropagation();
+      alternar?.();
+    });
+    on("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.stopPropagation();
+      alternar?.();
+    });
+  }
 
   Promise.all([import("@/lib/logo-datos.json"), listo]).then(([m]) => {
     if (!vivo) return;
@@ -279,11 +308,47 @@ export function mountWordmarkMutante(h1: HTMLElement, s: MutanteSettings, listo:
       quitarVisible = () => document.removeEventListener("visibilitychange", al);
     }
 
-    reposar(0);
+    if (s.modo === "ciclo") {
+      reposar(0);
+      return;
+    }
+
+    // el área del logo también se puede tocar (no solo sus líneas)
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pares)
+      for (let i = 0; i < p.n; i++) {
+        x0 = Math.min(x0, p.l[2 * i]);
+        x1 = Math.max(x1, p.l[2 * i]);
+        y0 = Math.min(y0, p.l[2 * i + 1]);
+        y1 = Math.max(y1, p.l[2 * i + 1]);
+      }
+    const area = document.createElementNS(NS, "rect");
+    area.setAttribute("x", String(x0));
+    area.setAttribute("y", String(y0));
+    area.setAttribute("width", String(x1 - x0));
+    area.setAttribute("height", String(y1 - y0));
+    area.setAttribute("fill", "transparent");
+    area.setAttribute("class", "wordmark-area");
+    dibujo.prepend(area);
+
+    let estado = 0;
+    let mutando = false;
+    alternar = () => {
+      if (mutando) return;
+      mutando = true;
+      const hasta = 1 - estado;
+      mutar(estado, hasta, () => {
+        estado = hasta;
+        mutando = false;
+      });
+    };
   });
 
   return () => {
     vivo = false;
+    quitarClic.forEach((f) => f());
+    delete h1.dataset.clic;
+    h1.removeAttribute("tabindex");
     cancelAnimationFrame(raf);
     clearTimeout(timer);
     quitarVisible();

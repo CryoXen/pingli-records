@@ -122,9 +122,11 @@ export const site = {
    */
   wordmark: {
     enabled: true,
+    /** "clic": cambia cada vez que se toca; "ciclo": cambia solo (con los tiempos de abajo). */
+    modo: "clic" as "clic" | "ciclo",
     /** "ascii": se deshace en caracteres que se reacomodan; "trazos": las líneas se deforman. */
     estilo: "trazos" as "ascii" | "trazos",
-    /** Cuánto se queda como texto y como logo. */
+    /** Cuánto se queda como texto y como logo (solo en modo "ciclo"). */
     texto: 12,
     logo: 12,
     /** Lo que dura cada mutación. */

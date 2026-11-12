@@ -295,7 +295,7 @@ export function mountCycle(
     if (loading) return loading;
     if (ready || !all.length || (!force && Date.now() < nextTry)) return Promise.resolve();
     hooks.prepare?.();
-    if (s.palabras?.enabled) void prepararDestello();
+    if (s.palabras?.enabled) void prepararDestello(s.palabras);
     loading = (async () => {
       const failed = new Set<string>();
       const last = readLast();

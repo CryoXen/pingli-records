@@ -1,152 +1,160 @@
 /*
- * Las fuentes del destello de palabras de la previsión (src/lib/destello.ts).
- * Subconjunto latino (con acentos y ñ); todas con licencia SIL Open Font
- * License 1.1 (de Google Fonts, vía @fontsource). El navegador solo las
- * descarga cuando se usan: poco antes de la previsión.
+ * Las fuentes del destello de palabras de la previsión (src/lib/destello.ts;
+ * la lista, en src/config/fuentes-destello.ts). Delgadas, cursivas, extrañas
+ * y minimalistas. Subconjunto latino (con acentos y ñ); todas con licencia
+ * SIL Open Font License 1.1 (de Google Fonts, vía @fontsource). Cada una
+ * tiene un solo archivo (su corte más fino), así que se declaran sin peso ni
+ * estilo. El navegador solo las descarga cuando se usan.
  */
 
 @font-face {
-  font-family: "Orbitron";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Gruppo";
   font-display: block;
-  src: url("./fonts/destello/orbitron.woff2") format("woff2");
+  src: url("./fonts/destello/gruppo.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Michroma";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Poiret One";
   font-display: block;
-  src: url("./fonts/destello/michroma.woff2") format("woff2");
+  src: url("./fonts/destello/poiret-one.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Major Mono Display";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Wire One";
+  font-display: block;
+  src: url("./fonts/destello/wire-one.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Raleway";
+  font-display: block;
+  src: url("./fonts/destello/raleway.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Josefin Sans";
+  font-display: block;
+  src: url("./fonts/destello/josefin-sans.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Exo 2";
+  font-display: block;
+  src: url("./fonts/destello/exo-2.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Advent Pro";
+  font-display: block;
+  src: url("./fonts/destello/advent-pro.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Montserrat Alternates";
+  font-display: block;
+  src: url("./fonts/destello/montserrat-alternates.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Jura";
+  font-display: block;
+  src: url("./fonts/destello/jura.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Lexend Zetta";
+  font-display: block;
+  src: url("./fonts/destello/lexend-zetta.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Julius Sans One";
+  font-display: block;
+  src: url("./fonts/destello/julius-sans-one.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Nixie One";
+  font-display: block;
+  src: url("./fonts/destello/nixie-one.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd IBM Plex Mono";
+  font-display: block;
+  src: url("./fonts/destello/ibm-plex-mono.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Azeret Mono";
+  font-display: block;
+  src: url("./fonts/destello/azeret-mono.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Major Mono Display";
   font-display: block;
   src: url("./fonts/destello/major-mono-display.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Megrim";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Sacramento";
+  font-display: block;
+  src: url("./fonts/destello/sacramento.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Mrs Saint Delafield";
+  font-display: block;
+  src: url("./fonts/destello/mrs-saint-delafield.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Monsieur La Doulaise";
+  font-display: block;
+  src: url("./fonts/destello/monsieur-la-doulaise.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Italianno";
+  font-display: block;
+  src: url("./fonts/destello/italianno.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Megrim";
   font-display: block;
   src: url("./fonts/destello/megrim.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Wallpoet";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/wallpoet.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Zen Dots";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/zen-dots.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Tourney";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/tourney.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Turret Road";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/turret-road.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Syncopate";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/syncopate.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "VT323";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/vt323.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "DotGothic16";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/dotgothic16.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Silkscreen";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/silkscreen.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Doto";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/doto.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Sixtyfour";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("./fonts/destello/sixtyfour.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Bungee Hairline";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Bungee Hairline";
   font-display: block;
   src: url("./fonts/destello/bungee-hairline.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Rubik Glitch";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Tourney";
   font-display: block;
-  src: url("./fonts/destello/rubik-glitch.woff2") format("woff2");
+  src: url("./fonts/destello/tourney.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Monoton";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Turret Road";
   font-display: block;
-  src: url("./fonts/destello/monoton.woff2") format("woff2");
+  src: url("./fonts/destello/turret-road.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Gruppo";
-  font-style: normal;
-  font-weight: 400;
+  font-family: "pd Redacted Script";
   font-display: block;
-  src: url("./fonts/destello/gruppo.woff2") format("woff2");
+  src: url("./fonts/destello/redacted-script.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "pd Doto";
+  font-display: block;
+  src: url("./fonts/destello/doto.woff2") format("woff2");
 }
 
 /* una palabra a la vez, arriba al centro, dentro del margen de la previsión */
@@ -158,13 +166,19 @@
   margin: 0;
   transform: translateY(-50%);
   color: var(--ink);
-  font-size: clamp(14px, 1.5vw, 19px);
+  font-size: clamp(15px, 1.6vw, 21px);
+  font-weight: 400;
+  font-stretch: 100%;
   line-height: 1;
   height: 1em;
   text-align: center;
   white-space: nowrap;
   overflow: visible;
   pointer-events: none;
+}
+
+.prevision-palabras[data-grupo="cursiva"] {
+  font-size: clamp(21px, 2.2vw, 29px);
 }
 
 /* llenando la pantalla, las palabras van encima de la imagen: que se lean */
