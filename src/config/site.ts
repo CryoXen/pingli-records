@@ -117,6 +117,19 @@ export const site = {
   genres: ["ambient", "noise", "drone", "industrial", "electrónica", "idm"],
 
   /**
+   * El nombre de abajo a la izquierda muta en el logo y regresa, en ciclo.
+   * Tiempos en segundos.
+   */
+  wordmark: {
+    enabled: true,
+    /** Cuánto se queda como texto y como logo. */
+    texto: 7,
+    logo: 5.5,
+    /** Lo que dura cada mutación. */
+    mutacion: 2.6,
+  },
+
+  /**
    * Artistas: cuadros fijos en el plano, alrededor de la esfera. Salen del
    * nombre de artista de cada lanzamiento (uno por nombre); su foto se pone
    * en el admin (pestaña artistas) y su lugar y tamaño con "editar" en el
