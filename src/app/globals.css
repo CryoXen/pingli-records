@@ -231,6 +231,30 @@ body {
   background: var(--paper);
 }
 
+/* modo "clic": el nombre (y el área del logo) se toca para cambiarlo */
+.wordmark[data-clic] {
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.wordmark[data-clic]:focus {
+  outline: none;
+}
+
+.wordmark[data-clic]:focus-visible .wordmark-letras {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.wordmark[data-clic] .wordmark-area {
+  pointer-events: all;
+}
+
 .wordmark-mutante {
   position: absolute;
   top: 0;
