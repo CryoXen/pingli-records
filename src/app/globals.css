@@ -220,6 +220,15 @@ body {
 /* el nombre que muta en el logo: el dibujo va encima del texto, en sus mismas medidas (1000 = 1em) */
 .wordmark {
   position: relative;
+  /* en negativo de lo que tenga detrás: oscuro sobre claro, claro sobre oscuro,
+     invertido sobre una foto; siempre se ve, en los dos mundos */
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* para que el negativo tenga contra qué compararse (el lienzo es transparente) */
+.stage {
+  background: var(--paper);
 }
 
 .wordmark-mutante {

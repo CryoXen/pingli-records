@@ -81,26 +81,6 @@
   background: var(--paper);
 }
 
-.adm-pestanas {
-  display: flex;
-  gap: 18px;
-}
-
-.adm-pestana {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink-2);
-  font: inherit;
-  cursor: pointer;
-}
-
-.adm-pestana[aria-current="page"] {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
 .adm-sesion {
   display: flex;
   flex-wrap: wrap;
@@ -108,10 +88,79 @@
   margin-left: auto;
 }
 
+/* en pantallas chicas: dónde estás y el botón del menú */
+.adm-menu-boton,
+.adm-donde,
+.adm-velo {
+  display: none;
+}
+
+/* —— barra lateral con las secciones, agrupadas —— */
+.adm-armazon {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: start;
+}
+
+.adm-lado {
+  position: sticky;
+  top: var(--adm-arriba, 49px);
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  max-height: calc(100vh - var(--adm-arriba, 49px));
+  max-height: calc(100dvh - var(--adm-arriba, 49px));
+  overflow: auto;
+  padding: 20px 12px 28px var(--gutter, 20px);
+  border-right: 1px solid var(--grid);
+}
+
+.adm-lado ul {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-lado-titulo {
+  margin: 0 0 4px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.adm-lado-opcion {
+  display: block;
+  width: 100%;
+  padding: 5px 8px 5px 12px;
+  border: 0;
+  border-left: 1px solid var(--grid);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.adm-lado-opcion:hover {
+  color: var(--link);
+}
+
+.adm-lado-opcion[aria-current="page"] {
+  border-left-color: var(--link);
+  color: var(--link);
+}
+
+.adm-lado-opcion:focus-visible,
+.adm-menu-boton:focus-visible {
+  outline: 1px solid var(--link);
+  outline-offset: 2px;
+}
+
 .adm-cuerpo {
+  min-width: 0;
   max-width: 1180px;
-  margin: 0 auto;
-  padding: 20px var(--gutter, 20px) 80px;
+  padding: 20px var(--gutter, 20px) 80px 28px;
 }
 
 /* —— controles —— */
@@ -797,8 +846,107 @@
     border-bottom: 1px solid var(--ink);
   }
 
+  /* arriba: menú, nombre y dónde estás; la sesión baja a su renglón */
+  .adm-arriba {
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px var(--gutter, 16px);
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+
+  .adm-menu-boton {
+    display: inline-block;
+    min-width: 62px;
+    padding: 7px 10px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .adm-menu-boton[aria-expanded="true"] {
+    border-color: var(--link);
+    color: var(--link);
+  }
+
+  .adm-donde {
+    display: block;
+    flex: 1 1 100%;
+    order: 3;
+    color: var(--ink-2);
+  }
+
   .adm-sesion {
-    margin-left: 0;
+    margin-left: auto;
+    gap: 12px;
+  }
+
+  .adm-correo {
+    display: none;
+  }
+
+  /* la barra lateral se vuelve un cajón que entra por la izquierda */
+  .adm-armazon {
+    display: block;
+  }
+
+  .adm-lado {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 4;
+    width: min(280px, 82vw);
+    max-height: none;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 18px 28px max(18px, env(safe-area-inset-left, 0px));
+    border-right: 1px solid var(--ink);
+    background: var(--paper);
+    font-size: 15px;
+    visibility: hidden;
+    transform: translateX(-102%);
+    transition: transform 0.18s ease-out, visibility 0s linear 0.18s;
+  }
+
+  .adm-armazon[data-menu] .adm-lado {
+    visibility: visible;
+    transform: none;
+    transition: transform 0.18s ease-out;
+  }
+
+  .adm-lado-opcion {
+    padding: 10px 10px 10px 14px;
+  }
+
+  .adm-velo {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    border: 0;
+    background: color-mix(in srgb, var(--ink) 28%, transparent);
+  }
+
+  .adm-armazon[data-menu] .adm-velo {
+    display: block;
+  }
+
+  .adm-cuerpo {
+    padding: 16px var(--gutter, 16px) 80px;
+  }
+
+  /* dedos: campos y botones más altos, y sin acercamiento automático en iPhone */
+  .adm-input,
+  .adm select,
+  .adm textarea {
+    font-size: 16px;
+  }
+
+  .adm-boton {
+    min-height: 40px;
+  }
+
+  .adm-link {
+    padding-block: 4px;
   }
 
   .adm-frase {
@@ -1028,5 +1176,84 @@
 @media (max-width: 860px) {
   .adm-musica {
     grid-template-columns: 1fr;
+  }
+}
+
+/* previsión → palabras: las fuentes que pueden salir */
+.adm-palabras-nota {
+  max-width: 62ch;
+  margin: 0 0 14px;
+}
+
+.adm-fuentes {
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.adm-fuentes legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.adm-fuentes-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-fuente {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--grid);
+  cursor: pointer;
+}
+
+.adm-fuente input {
+  grid-row: 1 / 3;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.adm-fuente-muestra {
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.adm-fuente[data-grupo="cursiva"] .adm-fuente-muestra {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.adm-fuente-nombre {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.adm-fuente[data-apagada] .adm-fuente-muestra {
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-lado {
+    transition: none;
   }
 }
