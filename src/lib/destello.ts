@@ -1,5 +1,6 @@
 /**
- * El destello de palabras de la previsión: arriba de la pantalla, palabras
+ * El destello de palabras de la previsión (solo las de tipo "previsión"):
+ * arriba de la pantalla, palabras
  * sueltas al azar de los libros del proyecto (src/config/palabras.json: las
  * más usadas de los cuatro libros en español), una a la vez y a toda
  * velocidad; cada palabra sale en una fuente distinta
@@ -21,6 +22,19 @@ export type DestelloSettings = {
   /** Ids de las fuentes que pueden salir (null = todas). */
   readonly fuentes?: readonly string[] | null;
 };
+
+/**
+ * El destello solo sale con las previsiones de tipo "previsión" (sin importar
+ * mayúsculas ni acentos: Previsión, PREVISION, previsiones…).
+ */
+export function activaDestello(tipo: string | null | undefined): boolean {
+  const t = (tipo ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  return /^prevision(es)?$/.test(t);
+}
 
 let palabras: string[] | null = null;
 let preparando: Promise<void> | null = null;

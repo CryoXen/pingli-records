@@ -39,7 +39,12 @@
  * previsión. Es la misma en los dos mundos y no se reinicia al cruzar.
  */
 import type { Prevision, Rareza } from "@/lib/contenido/tipos";
-import { mountDestello, prepararDestello, type DestelloSettings } from "@/lib/destello";
+import {
+  activaDestello,
+  mountDestello,
+  prepararDestello,
+  type DestelloSettings,
+} from "@/lib/destello";
 
 export type CycleSettings = {
   readonly enabled: boolean;
@@ -106,7 +111,9 @@ function readLast(): Last | null {
     const raw = localStorage.getItem(LAST_KEY);
     if (!raw) return null;
     // antes se guardaba solo la ruta
-    return raw.startsWith("{") ? (JSON.parse(raw) as Last) : { src: raw, tipo: "" };
+    return raw.startsWith("{")
+      ? (JSON.parse(raw) as Last)
+      : { src: raw, tipo: "" };
   } catch {
     return null;
   }
@@ -114,13 +121,17 @@ function readLast(): Last | null {
 
 function writeLast(p: Prevision) {
   try {
-    localStorage.setItem(LAST_KEY, JSON.stringify({ src: p.src, tipo: p.tipo }));
+    localStorage.setItem(
+      LAST_KEY,
+      JSON.stringify({ src: p.src, tipo: p.tipo }),
+    );
   } catch {
     /* almacenamiento bloqueado */
   }
 }
 
-const esperar = (ms: number) => new Promise<void>((r) => setTimeout(r, Math.max(0, ms)));
+const esperar = (ms: number) =>
+  new Promise<void>((r) => setTimeout(r, Math.max(0, ms)));
 
 /**
  * Elige una previsión: primero la rareza (por peso, entre las que tienen
@@ -140,7 +151,9 @@ export function pickPrevision(
     const otherType = pool.filter((p) => p.tipo !== last.tipo);
     if (otherType.length) pool = otherType;
   }
-  const tiers = (Object.keys(weights) as Rareza[]).filter((r) => weights[r] > 0 && pool.some((p) => p.rareza === r));
+  const tiers = (Object.keys(weights) as Rareza[]).filter(
+    (r) => weights[r] > 0 && pool.some((p) => p.rareza === r),
+  );
   if (!tiers.length) return pool[Math.floor(random() * pool.length)];
   const total = tiers.reduce((a, r) => a + weights[r], 0);
   let t = random() * total;
@@ -183,7 +196,9 @@ export function mountCycle(
   let fired = false;
   const timers: number[] = [];
   let overlay: HTMLElement | null = null;
-  const all: Prevision[] = images.map((i) => (typeof i === "string" ? { src: i, tipo: "", rareza: "comun" } : i));
+  const all: Prevision[] = images.map((i) =>
+    typeof i === "string" ? { src: i, tipo: "", rareza: "comun" } : i,
+  );
 
   let ready: Listo | null = null;
   let loading: Promise<void> | null = null;
@@ -199,7 +214,13 @@ export function mountCycle(
       const t = window.setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
       try {
         const r = await fetch(src, { signal: ac.signal });
-        if (r.status === 400 || r.status === 403 || r.status === 404 || r.status === 410) return null; // no existe
+        if (
+          r.status === 400 ||
+          r.status === 403 ||
+          r.status === 404 ||
+          r.status === 410
+        )
+          return null; // no existe
         if (!r.ok) continue;
         return await r.blob();
       } catch {
@@ -212,10 +233,16 @@ export function mountCycle(
   }
 
   /** Espera a que cargue (true) o falle (false), con tiempo límite. */
-  function cargaDe(el: HTMLImageElement | HTMLVideoElement, ms: number): Promise<boolean> {
+  function cargaDe(
+    el: HTMLImageElement | HTMLVideoElement,
+    ms: number,
+  ): Promise<boolean> {
     return new Promise((done) => {
       const isVideo = el instanceof HTMLVideoElement;
-      const listo = () => (isVideo ? (el as HTMLVideoElement).videoWidth > 0 : (el as HTMLImageElement).naturalWidth > 0);
+      const listo = () =>
+        isVideo
+          ? (el as HTMLVideoElement).videoWidth > 0
+          : (el as HTMLImageElement).naturalWidth > 0;
       const fin = (ok: boolean) => {
         window.clearTimeout(t);
         off();
@@ -223,7 +250,9 @@ export function mountCycle(
       };
       const onOk = () => fin(listo());
       const onMal = () => fin(false);
-      const evs = isVideo ? ["loadedmetadata", "loadeddata", "canplay"] : ["load"];
+      const evs = isVideo
+        ? ["loadedmetadata", "loadeddata", "canplay"]
+        : ["load"];
       const off = () => {
         evs.forEach((e) => el.removeEventListener(e, onOk));
         el.removeEventListener("error", onMal);
@@ -232,7 +261,8 @@ export function mountCycle(
       el.addEventListener("error", onMal);
       const t = window.setTimeout(() => fin(listo()), ms);
       if (!isVideo && (el as HTMLImageElement).complete && listo()) fin(true);
-      else if (isVideo && (el as HTMLVideoElement).readyState >= 1 && listo()) fin(true);
+      else if (isVideo && (el as HTMLVideoElement).readyState >= 1 && listo())
+        fin(true);
     });
   }
 
@@ -250,9 +280,13 @@ export function mountCycle(
     } else {
       img.src = p.src; // sin fetch (p. ej. otro servidor sin CORS): directo
     }
-    if (!(await cargaDe(img, url ? 15000 : FETCH_TIMEOUT_MS))) return blob === "red" ? "red" : null;
+    if (!(await cargaDe(img, url ? 15000 : FETCH_TIMEOUT_MS)))
+      return blob === "red" ? "red" : null;
     // decodificada de una vez, así aparece entera; si el teléfono se tarda, se muestra igual
-    await Promise.race([img.decode?.().catch(() => {}), esperar(DECODE_TIMEOUT_MS)]);
+    await Promise.race([
+      img.decode?.().catch(() => {}),
+      esperar(DECODE_TIMEOUT_MS),
+    ]);
     return { p, el: img, url, dur: s.hold };
   }
 
@@ -279,23 +313,36 @@ export function mountCycle(
       // el sonido, aparte: suena por el motor de audio (ya desbloqueado al entrar)
       if (hooks.decodificar) {
         const decodificar = hooks.decodificar;
-        audio = await Promise.race([blob.arrayBuffer().then((d) => decodificar(d)).catch(() => null), esperar(15000).then(() => null)]);
+        audio = await Promise.race([
+          blob
+            .arrayBuffer()
+            .then((d) => decodificar(d))
+            .catch(() => null),
+          esperar(15000).then(() => null),
+        ]);
       }
     } else {
       v.src = p.src;
     }
     v.load();
-    if (!(await cargaDe(v, url ? 15000 : FETCH_TIMEOUT_MS))) return blob === "red" ? "red" : null;
-    const d = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : p.duracion ?? 10;
+    if (!(await cargaDe(v, url ? 15000 : FETCH_TIMEOUT_MS)))
+      return blob === "red" ? "red" : null;
+    const d =
+      Number.isFinite(v.duration) && v.duration > 0
+        ? v.duration
+        : (p.duracion ?? 10);
     return { p, el: v, url, audio, dur: Math.min(VIDEO_MAX_S, d) };
   }
 
   /** Elige y descarga; si una no carga, prueba con otra. */
   function preload(force = false): Promise<void> {
     if (loading) return loading;
-    if (ready || !all.length || (!force && Date.now() < nextTry)) return Promise.resolve();
+    if (ready || !all.length || (!force && Date.now() < nextTry))
+      return Promise.resolve();
     hooks.prepare?.();
-    if (s.palabras?.enabled) void prepararDestello(s.palabras);
+    // las palabras y sus fuentes, solo si alguna previsión las va a usar
+    if (s.palabras?.enabled && all.some((i) => activaDestello(i.tipo)))
+      void prepararDestello(s.palabras);
     loading = (async () => {
       const failed = new Set<string>();
       const last = readLast();
@@ -308,7 +355,9 @@ export function mountCycle(
         if (!p) break;
         let r: Listo | null | "red" = null;
         try {
-          r = await (p.medio === "video" ? prepararVideo(p) : prepararImagen(p));
+          r = await (p.medio === "video"
+            ? prepararVideo(p)
+            : prepararImagen(p));
         } catch {
           r = null;
         }
@@ -327,8 +376,22 @@ export function mountCycle(
     e.preventDefault();
     e.stopPropagation();
   };
-  const BLOCKED = ["wheel", "touchstart", "touchmove", "gesturestart", "gesturechange", "contextmenu", "dragstart", "dblclick", "keydown", "pointerdown"] as const;
-  const unblock = () => BLOCKED.forEach((ev) => window.removeEventListener(ev, block, { capture: true }));
+  const BLOCKED = [
+    "wheel",
+    "touchstart",
+    "touchmove",
+    "gesturestart",
+    "gesturechange",
+    "contextmenu",
+    "dragstart",
+    "dblclick",
+    "keydown",
+    "pointerdown",
+  ] as const;
+  const unblock = () =>
+    BLOCKED.forEach((ev) =>
+      window.removeEventListener(ev, block, { capture: true }),
+    );
 
   let caption: HTMLElement | null = null;
 
@@ -345,8 +408,14 @@ export function mountCycle(
     const el = ready.el;
     const isVideo = el instanceof HTMLVideoElement;
     // un video que todavía no dice su tamaño: 16:9 mientras tanto
-    const nw = (isVideo ? (el as HTMLVideoElement).videoWidth : (el as HTMLImageElement).naturalWidth) || 1600;
-    const nh = (isVideo ? (el as HTMLVideoElement).videoHeight : (el as HTMLImageElement).naturalHeight) || 900;
+    const nw =
+      (isVideo
+        ? (el as HTMLVideoElement).videoWidth
+        : (el as HTMLImageElement).naturalWidth) || 1600;
+    const nh =
+      (isVideo
+        ? (el as HTMLVideoElement).videoHeight
+        : (el as HTMLImageElement).naturalHeight) || 900;
     const cs = getComputedStyle(overlay);
     const vw = overlay.clientWidth || window.innerWidth;
     const vh = overlay.clientHeight || window.innerHeight;
@@ -368,14 +437,16 @@ export function mountCycle(
     overlay.className = "prevision";
     overlay.dataset.fit = s.fit;
     overlay.dataset.rareza = r.p.rareza;
-    overlay.dataset.medio = r.el instanceof HTMLVideoElement ? "video" : "imagen";
+    overlay.dataset.medio =
+      r.el instanceof HTMLVideoElement ? "video" : "imagen";
     overlay.setAttribute("aria-hidden", "true");
     r.el.draggable = false;
     // la previsión y, debajo, solo el nombre del archivo
     const obra = document.createElement("div");
     obra.className = "prevision-obra";
     obra.append(r.el);
-    const nombre = r.p.nombre ?? decodeURIComponent(r.p.src.split("/").pop() ?? "");
+    const nombre =
+      r.p.nombre ?? decodeURIComponent(r.p.src.split("/").pop() ?? "");
     if (nombre && s.fit !== "cover") {
       caption = document.createElement("p");
       caption.className = "prevision-nombre";
@@ -384,12 +455,15 @@ export function mountCycle(
     }
     overlay.append(obra);
     document.body.append(overlay);
-    // arriba, palabras de los libros a toda velocidad
-    if (s.palabras) mountDestello(overlay, s.palabras);
+    // arriba, palabras de los libros a toda velocidad (solo las de tipo "previsión")
+    if (s.palabras && activaDestello(r.p.tipo))
+      mountDestello(overlay, s.palabras);
     layout();
     window.addEventListener("resize", layout);
     // quieta hasta que se acaba el tiempo
-    BLOCKED.forEach((ev) => window.addEventListener(ev, block, { capture: true, passive: false }));
+    BLOCKED.forEach((ev) =>
+      window.addEventListener(ev, block, { capture: true, passive: false }),
+    );
     (document.activeElement as HTMLElement | null)?.blur?.();
 
     if (r.el instanceof HTMLVideoElement) mostrarVideo(r, r.el);
@@ -442,7 +516,9 @@ export function mountCycle(
 
   /** ¿Sigue lista? (en teléfonos con poca memoria, mejor revisar) */
   const sigueLista = (r: Listo) =>
-    r.el instanceof HTMLVideoElement ? !r.el.error : (r.el as HTMLImageElement).naturalWidth > 0;
+    r.el instanceof HTMLVideoElement
+      ? !r.el.error
+      : (r.el as HTMLImageElement).naturalWidth > 0;
 
   /** Se cumplió el tiempo: la previsión (cuando la página esté a la vista). */
   async function fire() {
@@ -493,7 +569,12 @@ export function mountCycle(
   const watch = ["visibilitychange", "pageshow", "focus"] as const;
   function stopTicking() {
     window.clearInterval(ticker);
-    watch.forEach((ev) => (ev === "visibilitychange" ? document : window).removeEventListener(ev, check));
+    watch.forEach((ev) =>
+      (ev === "visibilitychange" ? document : window).removeEventListener(
+        ev,
+        check,
+      ),
+    );
   }
 
   /** Arranca la cuenta al entrar. */
@@ -501,7 +582,12 @@ export function mountCycle(
     if (!alive || fired) return;
     deadline = Date.now() + s.duration * 1000;
     ticker = window.setInterval(check, 200);
-    watch.forEach((ev) => (ev === "visibilitychange" ? document : window).addEventListener(ev, check));
+    watch.forEach((ev) =>
+      (ev === "visibilitychange" ? document : window).addEventListener(
+        ev,
+        check,
+      ),
+    );
     check();
   }
 

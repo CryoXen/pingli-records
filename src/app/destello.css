@@ -166,7 +166,7 @@
   margin: 0;
   transform: translateY(-50%);
   color: var(--ink);
-  font-size: clamp(15px, 1.6vw, 21px);
+  font-size: clamp(17px, 1.9vw, 24px);
   font-weight: 400;
   font-stretch: 100%;
   line-height: 1;
@@ -178,11 +178,12 @@
 }
 
 .prevision-palabras[data-grupo="cursiva"] {
-  font-size: clamp(21px, 2.2vw, 29px);
+  font-size: clamp(23px, 2.5vw, 32px);
 }
 
-/* llenando la pantalla, las palabras van encima de la imagen: que se lean */
+/* llenando la pantalla, las palabras van encima de la imagen: un halo del fondo para que se lean */
 .prevision[data-fit="cover"] .prevision-palabras {
-  mix-blend-mode: difference;
-  color: #fff;
+  text-shadow:
+    0 0 2px var(--paper),
+    0 0 6px var(--paper);
 }

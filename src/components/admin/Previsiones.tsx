@@ -14,19 +14,40 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { site } from "@/config/site";
 import { analizarSonido, LUFS_MUSICA } from "@/lib/admin/analizar-sonido";
 import { rutaUnica, type AdminStore } from "@/lib/admin/store";
-import { convertirVideo, leerVideo, puedeConvertir, tiempo, VIDEO_MAX_S, type InfoVideo } from "@/lib/admin/video";
+import {
+  convertirVideo,
+  leerVideo,
+  puedeConvertir,
+  tiempo,
+  VIDEO_MAX_S,
+  type InfoVideo,
+} from "@/lib/admin/video";
 import { formatClock } from "@/lib/ciclo";
-import { completarPrevision, DURACION_CICLO, DURACION_FOTO, nombreDeRuta } from "@/lib/contenido/mapear";
-import { RAREZAS, type AjustesPrevision, type FilaPrevision, type Rareza } from "@/lib/contenido/tipos";
+import {
+  completarPrevision,
+  DURACION_CICLO,
+  DURACION_FOTO,
+  nombreDeRuta,
+} from "@/lib/contenido/mapear";
+import {
+  RAREZAS,
+  type AjustesPrevision,
+  type FilaPrevision,
+  type Rareza,
+} from "@/lib/contenido/tipos";
 import { Confirmar, EstadoTexto, Imagen, Segmentos, useEstado } from "./comun";
 
 const nuevoId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
-    : "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx".replace(/x/g, () => Math.floor(Math.random() * 16).toString(16));
+    : "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx".replace(/x/g, () =>
+        Math.floor(Math.random() * 16).toString(16),
+      );
 
-const pct = (n: number) => (n >= 10 ? `${Math.round(n)} %` : `${n.toFixed(1)} %`);
-const esVideo = (f: File) => f.type.startsWith("video/") || /\.(mp4|m4v|mov|webm|mkv|3gp)$/i.test(f.name);
+const pct = (n: number) =>
+  n >= 10 ? `${Math.round(n)} %` : `${n.toFixed(1)} %`;
+const esVideo = (f: File) =>
+  f.type.startsWith("video/") || /\.(mp4|m4v|mov|webm|mkv|3gp)$/i.test(f.name);
 /** Lo más pesado que se acepta para convertir (un video de teléfono de varios minutos). */
 const MAX_VIDEO_MB = 2048;
 /** Supabase (plan gratis) no acepta archivos de más de 50 MB. */
@@ -35,17 +56,38 @@ const MAX_SUBIDA_MB = 50;
 /** Probabilidad de cada rareza y de cada previsión, con las activas de hoy. */
 function probabilidades(filas: readonly FilaPrevision[]) {
   const activas = filas.filter((f) => f.activo);
-  const por = Object.fromEntries(RAREZAS.map((r) => [r.id, activas.filter((f) => f.rareza === r.id).length])) as Record<Rareza, number>;
+  const por = Object.fromEntries(
+    RAREZAS.map((r) => [r.id, activas.filter((f) => f.rareza === r.id).length]),
+  ) as Record<Rareza, number>;
   const pesos = site.cycle.rareza;
   const total = RAREZAS.reduce((a, r) => a + (por[r.id] ? pesos[r.id] : 0), 0);
-  const deRareza = (r: Rareza) => (total && por[r] ? (pesos[r] / total) * 100 : 0);
-  return { por, deRareza, deImagen: (r: Rareza) => (por[r] ? deRareza(r) / por[r] : 0) };
+  const deRareza = (r: Rareza) =>
+    total && por[r] ? (pesos[r] / total) * 100 : 0;
+  return {
+    por,
+    deRareza,
+    deImagen: (r: Rareza) => (por[r] ? deRareza(r) / por[r] : 0),
+  };
 }
 
-type Subida = { id: number; nombre: string; estado: string; tipo: "subiendo" | "listo" | "error" };
-type Pedido = { file: File; info: InfoVideo; responder: (t: { inicio: number; fin: number } | null) => void };
+type Subida = {
+  id: number;
+  nombre: string;
+  estado: string;
+  tipo: "subiendo" | "listo" | "error";
+};
+type Pedido = {
+  file: File;
+  info: InfoVideo;
+  responder: (t: { inicio: number; fin: number } | null) => void;
+};
 
-export function Previsiones({ store, filas, setFilas, avisar }: {
+export function Previsiones({
+  store,
+  filas,
+  setFilas,
+  avisar,
+}: {
   store: AdminStore;
   filas: FilaPrevision[];
   setFilas: (f: (prev: FilaPrevision[]) => FilaPrevision[]) => void;
@@ -80,19 +122,32 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
 
   /** El recorte de un video largo: abre el cuadro y espera la respuesta. */
   const pedirTramo = (file: File, info: InfoVideo) =>
-    new Promise<{ inicio: number; fin: number } | null>((responder) => setPedido({ file, info, responder }));
+    new Promise<{ inicio: number; fin: number } | null>((responder) =>
+      setPedido({ file, info, responder }),
+    );
 
   async function subir(archivos: File[]) {
-    const validos = archivos.filter((a) => a.type.startsWith("image/") || esVideo(a));
-    const nuevas = validos.map((a) => ({ id: ++contador.current, nombre: a.name, estado: "en espera…", tipo: "subiendo" as const }));
+    const validos = archivos.filter(
+      (a) => a.type.startsWith("image/") || esVideo(a),
+    );
+    const nuevas = validos.map((a) => ({
+      id: ++contador.current,
+      nombre: a.name,
+      estado: "en espera…",
+      tipo: "subiendo" as const,
+    }));
     setSubidas((s) => [...nuevas, ...s].slice(0, 30));
     const opciones = { tipo: tipo.trim().toLowerCase(), rareza };
     for (const [i, a] of validos.entries()) {
       const id = nuevas[i].id;
       const marcar = (estado: string, t: Subida["tipo"] = "subiendo") =>
-        setSubidas((s) => s.map((x) => (x.id === id ? { ...x, estado, tipo: t } : x)));
+        setSubidas((s) =>
+          s.map((x) => (x.id === id ? { ...x, estado, tipo: t } : x)),
+        );
       try {
-        const fila = esVideo(a) ? await subirVideo(a, opciones, marcar) : await subirImagen(a, opciones, marcar);
+        const fila = esVideo(a)
+          ? await subirVideo(a, opciones, marcar)
+          : await subirImagen(a, opciones, marcar);
         if (!fila) {
           marcar("cancelado", "error");
           continue;
@@ -107,48 +162,88 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
     avisar();
   }
 
-  async function subirImagen(a: File, o: { tipo: string; rareza: Rareza }, marcar: (e: string) => void): Promise<FilaPrevision> {
+  async function subirImagen(
+    a: File,
+    o: { tipo: string; rareza: Rareza },
+    marcar: (e: string) => void,
+  ): Promise<FilaPrevision> {
     marcar("subiendo…");
     const ruta = await store.subir("previsiones", a, rutaUnica("", a));
-    return { id: nuevoId(), ruta, nombre: a.name, tipo: o.tipo, rareza: o.rareza, activo: true, creado: new Date().toISOString(), medio: "imagen", duracion: null, ganancia: 0 };
+    return {
+      id: nuevoId(),
+      ruta,
+      nombre: a.name,
+      tipo: o.tipo,
+      rareza: o.rareza,
+      activo: true,
+      creado: new Date().toISOString(),
+      medio: "imagen",
+      duracion: null,
+      ganancia: 0,
+    };
   }
 
-  async function subirVideo(a: File, o: { tipo: string; rareza: Rareza }, marcar: (e: string) => void): Promise<FilaPrevision | null> {
-    if (a.size > MAX_VIDEO_MB * 1024 * 1024) throw new Error("el video pesa demasiado.");
+  async function subirVideo(
+    a: File,
+    o: { tipo: string; rareza: Rareza },
+    marcar: (e: string) => void,
+  ): Promise<FilaPrevision | null> {
+    if (a.size > MAX_VIDEO_MB * 1024 * 1024)
+      throw new Error("el video pesa demasiado.");
     marcar("leyendo el video…");
     const info = await leerVideo(a);
-    if (!(info.duracion > 0) || !info.ancho) throw new Error("no se pudo leer como video.");
+    if (!(info.duracion > 0) || !info.ancho)
+      throw new Error("no se pudo leer como video.");
     const largo = info.duracion > VIDEO_MAX_S + 0.05;
-    const tramo = largo ? await pedirTramo(a, info) : { inicio: 0, fin: info.duracion };
+    const tramo = largo
+      ? await pedirTramo(a, info)
+      : { inicio: 0, fin: info.duracion };
     if (!tramo) return null;
 
     let archivo: File;
     let duracion = tramo.fin - tramo.inicio;
     if (await puedeConvertir()) {
       marcar("convirtiendo 0 %");
-      const c = await convertirVideo(a, tramo, (p) => marcar(`convirtiendo ${Math.round(p * 100)} %`));
+      const c = await convertirVideo(a, tramo, (p) =>
+        marcar(`convirtiendo ${Math.round(p * 100)} %`),
+      );
       archivo = c.archivo;
       duracion = c.duracion;
-    } else if (!largo && /\.(mp4|m4v)$/i.test(a.name) && a.size <= MAX_SUBIDA_MB * 1024 * 1024) {
+    } else if (
+      !largo &&
+      /\.(mp4|m4v)$/i.test(a.name) &&
+      a.size <= MAX_SUBIDA_MB * 1024 * 1024
+    ) {
       // sin poder convertir aquí, un MP4 corto se sube tal cual
       archivo = a;
     } else {
-      throw new Error("este navegador no puede recortar ni convertir videos: usa Chrome, Edge o Safari en computadora.");
+      throw new Error(
+        "este navegador no puede recortar ni convertir videos: usa Chrome, Edge o Safari en computadora.",
+      );
     }
-    if (archivo.size > MAX_SUBIDA_MB * 1024 * 1024) throw new Error(`quedó de más de ${MAX_SUBIDA_MB} MB: elige un fragmento más corto.`);
+    if (archivo.size > MAX_SUBIDA_MB * 1024 * 1024)
+      throw new Error(
+        `quedó de más de ${MAX_SUBIDA_MB} MB: elige un fragmento más corto.`,
+      );
 
     // el sonido del video se nivela con la música (sin volver a codificarlo)
     marcar("midiendo el sonido…");
     let ganancia = 0;
     if (info.audio) {
       try {
-        ganancia = (await analizarSonido(await archivo.arrayBuffer(), LUFS_MUSICA)).gainDb;
+        ganancia = (
+          await analizarSonido(await archivo.arrayBuffer(), LUFS_MUSICA)
+        ).gainDb;
       } catch {
         ganancia = 0; // sin sonido, o el navegador no lo separa: tal cual
       }
     }
     marcar(`subiendo ${(archivo.size / 1024 / 1024).toFixed(1)} MB…`);
-    const ruta = await store.subir("previsiones", archivo, rutaUnica("", archivo));
+    const ruta = await store.subir(
+      "previsiones",
+      archivo,
+      rutaUnica("", archivo),
+    );
     return {
       id: nuevoId(),
       ruta,
@@ -198,17 +293,33 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
           </label>
         </p>
         <p className="adm-gris adm-nota-chica">
-          videos: hasta {VIDEO_MAX_S} s, con su sonido (en lugar de la canción final). si es más largo, eliges el fragmento. se convierten a mp4
-          ligero (máx. 1080p) antes de subirse, así se ven en cualquier teléfono.
+          videos: hasta {VIDEO_MAX_S} s, con su sonido (en lugar de la canción
+          final). si es más largo, eliges el fragmento. se convierten a mp4
+          ligero (máx. 1080p) antes de subirse, así se ven en cualquier
+          teléfono.
         </p>
         <div className="adm-subir-opciones">
           <label className="adm-campo">
             <span>tipo de las que subas</span>
-            <input className="adm-input" list="adm-tipos" value={tipo} placeholder="paisaje, glitch…" onChange={(e) => setTipo(e.target.value)} />
+            <input
+              className="adm-input"
+              list="adm-tipos"
+              value={tipo}
+              placeholder="paisaje, glitch…"
+              onChange={(e) => setTipo(e.target.value)}
+            />
+            <span className="adm-gris adm-nota-chica">
+              con tipo «previsión», arriba destellan las palabras de los libros.
+            </span>
           </label>
           <div className="adm-campo">
             <span>rareza</span>
-            <Segmentos label="rareza de las que subas" value={rareza} options={RAREZAS} onChange={setRareza} />
+            <Segmentos
+              label="rareza de las que subas"
+              value={rareza}
+              options={RAREZAS}
+              onChange={setRareza}
+            />
           </div>
         </div>
         {subidas.length ? (
@@ -222,9 +333,11 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
         ) : null}
       </div>
       <datalist id="adm-tipos">
-        {tipos.filter(([t]) => t).map(([t]) => (
-          <option key={t} value={t} />
-        ))}
+        {tipos
+          .filter(([t]) => t)
+          .map(([t]) => (
+            <option key={t} value={t} />
+          ))}
       </datalist>
 
       <div className="adm-rarezas">
@@ -232,15 +345,25 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
           <div key={r.id} className="adm-rareza" data-rareza={r.id}>
             <b>{r.nombre}</b>
             <span>
-              {prob.por[r.id]} {prob.por[r.id] === 1 ? "previsión" : "previsiones"}
+              {prob.por[r.id]}{" "}
+              {prob.por[r.id] === 1 ? "previsión" : "previsiones"}
             </span>
-            <span>{prob.por[r.id] ? `sale ${pct(prob.deRareza(r.id))} de las veces` : "sin previsiones: su parte se reparte"}</span>
+            <span>
+              {prob.por[r.id]
+                ? `sale ${pct(prob.deRareza(r.id))} de las veces`
+                : "sin previsiones: su parte se reparte"}
+            </span>
           </div>
         ))}
       </div>
 
       <div className="adm-barra">
-        <select className="adm-input adm-mini" value={filtro} onChange={(e) => setFiltro(e.target.value)} aria-label="mostrar">
+        <select
+          className="adm-input adm-mini"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          aria-label="mostrar"
+        >
           <option value="todas">todas ({filas.length})</option>
           <option value="m:imagen">fotos ({filas.length - videos})</option>
           <option value="m:video">videos ({videos})</option>
@@ -255,10 +378,18 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
             </option>
           ))}
         </select>
-        <span className="adm-cuenta">nunca salen dos del mismo tipo seguidas · las que no cargan no salen</span>
+        <span className="adm-cuenta">
+          nunca salen dos del mismo tipo seguidas · las que no cargan no salen
+        </span>
       </div>
 
-      {visibles.length === 0 ? <p className="adm-vacio">{filas.length ? "nada con ese filtro." : "todavía no hay previsiones: a los 3:33 el sitio vuelve a “entrar” sin nada."}</p> : null}
+      {visibles.length === 0 ? (
+        <p className="adm-vacio">
+          {filas.length
+            ? "nada con ese filtro."
+            : "todavía no hay previsiones: a los 3:33 el sitio vuelve a “entrar” sin nada."}
+        </p>
+      ) : null}
       <ul className="adm-galeria">
         {visibles.map((f) => (
           <TarjetaPrevision
@@ -299,7 +430,13 @@ export function Previsiones({ store, filas, setFilas, avisar }: {
  * Los tiempos del ciclo: cuánto dura la cuenta regresiva de cada visita y
  * cuánto se ve cada foto al terminar (los videos duran lo que duran).
  */
-function TiemposCiclo({ store, avisar }: { store: AdminStore; avisar: () => void }) {
+function TiemposCiclo({
+  store,
+  avisar,
+}: {
+  store: AdminStore;
+  avisar: () => void;
+}) {
   const [a, setA] = useState<AjustesPrevision | null>(null);
   const [estado, correr] = useEstado();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -326,10 +463,16 @@ function TiemposCiclo({ store, avisar }: { store: AdminStore; avisar: () => void
   };
   return (
     <div className="adm-ciclo">
-      <CuentaRegresiva valor={a.duracionCiclo} onChange={(s) => cambiar({ duracionCiclo: s })} />
+      <CuentaRegresiva
+        valor={a.duracionCiclo}
+        onChange={(s) => cambiar({ duracionCiclo: s })}
+      />
       <div className="adm-volumen adm-duracion">
         <label className="adm-campo">
-          <span>al terminar, cada foto se ve (los videos duran lo que duran, hasta {VIDEO_MAX_S} s)</span>
+          <span>
+            al terminar, cada foto se ve (los videos duran lo que duran, hasta{" "}
+            {VIDEO_MAX_S} s)
+          </span>
           <input
             type="range"
             min={DURACION_FOTO.min}
@@ -348,7 +491,13 @@ function TiemposCiclo({ store, avisar }: { store: AdminStore; avisar: () => void
 }
 
 /** La cuenta regresiva en minutos y segundos (de 0:10 a 59:59). */
-function CuentaRegresiva({ valor, onChange }: { valor: number; onChange: (s: number) => void }) {
+function CuentaRegresiva({
+  valor,
+  onChange,
+}: {
+  valor: number;
+  onChange: (s: number) => void;
+}) {
   const [min, setMin] = useState(String(Math.floor(valor / 60)));
   const [seg, setSeg] = useState(String(valor % 60));
   // si llega otro valor (al cargar, o al volver al original), se reescribe
@@ -359,13 +508,19 @@ function CuentaRegresiva({ valor, onChange }: { valor: number; onChange: (s: num
   const enviar = (m: string, s: string) => {
     const mm = Math.max(0, Math.min(59, Math.floor(Number(m) || 0)));
     const ss = Math.max(0, Math.min(59, Math.floor(Number(s) || 0)));
-    const total = Math.max(DURACION_CICLO.min, Math.min(DURACION_CICLO.max, mm * 60 + ss));
+    const total = Math.max(
+      DURACION_CICLO.min,
+      Math.min(DURACION_CICLO.max, mm * 60 + ss),
+    );
     if (total !== valor) onChange(total);
   };
   const original = site.cycle.duration;
   return (
     <fieldset className="adm-campo adm-cuenta">
-      <legend>cuenta regresiva: cuánto dura cada visita antes de la previsión (de 0:10 a 59:59)</legend>
+      <legend>
+        cuenta regresiva: cuánto dura cada visita antes de la previsión (de 0:10
+        a 59:59)
+      </legend>
       <div className="adm-tiempo">
         <input
           className="adm-input adm-num"
@@ -397,14 +552,23 @@ function CuentaRegresiva({ valor, onChange }: { valor: number; onChange: (s: num
           onBlur={() => setSeg(String(valor % 60))}
         />
         <span>s</span>
-        <span className="adm-volumen-valor adm-reloj">{formatClock(valor)}</span>
+        <span className="adm-volumen-valor adm-reloj">
+          {formatClock(valor)}
+        </span>
         {valor !== original ? (
-          <button type="button" className="adm-link" onClick={() => onChange(original)}>
+          <button
+            type="button"
+            className="adm-link"
+            onClick={() => onChange(original)}
+          >
             volver a {formatClock(original)}
           </button>
         ) : null}
       </div>
-      <span className="adm-gris adm-nota-chica">la previsión se empieza a descargar 90 s antes del final (o desde el inicio, si dura menos).</span>
+      <span className="adm-gris adm-nota-chica">
+        la previsión se empieza a descargar 90 s antes del final (o desde el
+        inicio, si dura menos).
+      </span>
     </fieldset>
   );
 }
@@ -413,7 +577,15 @@ function CuentaRegresiva({ valor, onChange }: { valor: number; onChange: (s: num
  * El cuadro para elegir el fragmento de un video largo: dónde empieza y
  * cuánto dura (hasta 30 s). Se puede ver y escuchar antes de recortarlo.
  */
-function RecorteVideo({ file, info, onListo }: { file: File; info: InfoVideo; onListo: (t: { inicio: number; fin: number } | null) => void }) {
+function RecorteVideo({
+  file,
+  info,
+  onListo,
+}: {
+  file: File;
+  info: InfoVideo;
+  onListo: (t: { inicio: number; fin: number } | null) => void;
+}) {
   const dur = info.duracion;
   const [inicio, setInicio] = useState(0);
   const [largo, setLargo] = useState(Math.min(VIDEO_MAX_S, dur));
@@ -466,7 +638,12 @@ function RecorteVideo({ file, info, onListo }: { file: File; info: InfoVideo; on
   };
 
   return (
-    <div className="adm-modal" role="dialog" aria-modal="true" aria-label="elegir el fragmento del video">
+    <div
+      className="adm-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="elegir el fragmento del video"
+    >
       <div className="adm-recorte">
         <p className="adm-recorte-titulo">
           <b>{file.name}</b>
@@ -475,7 +652,9 @@ function RecorteVideo({ file, info, onListo }: { file: File; info: InfoVideo; on
             · {tiempo(dur)} · {info.ancho}×{info.alto}
           </span>
         </p>
-        <p className="adm-gris adm-nota-chica">dura más de {VIDEO_MAX_S} s: elige el fragmento que va a aparecer.</p>
+        <p className="adm-gris adm-nota-chica">
+          dura más de {VIDEO_MAX_S} s: elige el fragmento que va a aparecer.
+        </p>
         <video
           ref={ref}
           className="adm-recorte-video"
@@ -501,29 +680,62 @@ function RecorteVideo({ file, info, onListo }: { file: File; info: InfoVideo; on
             moverInicio(((e.clientX - r.left) / r.width) * dur - largo / 2);
           }}
         >
-          <span className="adm-linea-tramo" style={{ left: `${(inicio / dur) * 100}%`, width: `${((fin - inicio) / dur) * 100}%` }} />
-          {viendo ? <span className="adm-linea-ahora" style={{ left: `${(ahora / dur) * 100}%` }} /> : null}
+          <span
+            className="adm-linea-tramo"
+            style={{
+              left: `${(inicio / dur) * 100}%`,
+              width: `${((fin - inicio) / dur) * 100}%`,
+            }}
+          />
+          {viendo ? (
+            <span
+              className="adm-linea-ahora"
+              style={{ left: `${(ahora / dur) * 100}%` }}
+            />
+          ) : null}
         </div>
         <label className="adm-campo">
           <span>
             empieza en <b>{tiempo(inicio)}</b>
           </span>
-          <input type="range" min={0} max={Math.max(0, dur - 0.5)} step={0.1} value={inicio} onChange={(e) => moverInicio(Number(e.target.value))} />
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, dur - 0.5)}
+            step={0.1}
+            value={inicio}
+            onChange={(e) => moverInicio(Number(e.target.value))}
+          />
         </label>
         <label className="adm-campo">
           <span>
             dura <b>{(fin - inicio).toFixed(1)} s</b> (termina en {tiempo(fin)})
           </span>
-          <input type="range" min={0.5} max={maxLargo} step={0.1} value={Math.min(largo, maxLargo)} onChange={(e) => setLargo(Number(e.target.value))} />
+          <input
+            type="range"
+            min={0.5}
+            max={maxLargo}
+            step={0.1}
+            value={Math.min(largo, maxLargo)}
+            onChange={(e) => setLargo(Number(e.target.value))}
+          />
         </label>
         <div className="adm-acciones">
           <button type="button" className="adm-boton" onClick={ver}>
             {viendo ? "■ parar" : "▶ ver fragmento"}
           </button>
-          <button type="button" className="adm-boton adm-primario" onClick={() => onListo({ inicio, fin })}>
+          <button
+            type="button"
+            className="adm-boton adm-primario"
+            onClick={() => onListo({ inicio, fin })}
+          >
             recortar y subir
           </button>
-          <button type="button" className="adm-link" onClick={() => onListo(null)}>
+          <button
+            type="button"
+            className="adm-link"
+            onClick={() => onListo(null)}
+          >
             cancelar
           </button>
         </div>
@@ -570,7 +782,10 @@ function VideoMini({ store, ruta }: { store: AdminStore; ruta: string }) {
           const v = ref.current;
           if (!v) return;
           if (!v.paused) return v.pause();
-          void v.play().then(() => setTocando(true), () => setTocando(false));
+          void v.play().then(
+            () => setTocando(true),
+            () => setTocando(false),
+          );
         }}
       >
         {tocando ? "■" : "▶"}
@@ -579,7 +794,13 @@ function VideoMini({ store, ruta }: { store: AdminStore; ruta: string }) {
   );
 }
 
-function TarjetaPrevision({ store, fila, prob, guardar, borrar }: {
+function TarjetaPrevision({
+  store,
+  fila,
+  prob,
+  guardar,
+  borrar,
+}: {
   store: AdminStore;
   fila: FilaPrevision;
   prob: number;
@@ -588,16 +809,34 @@ function TarjetaPrevision({ store, fila, prob, guardar, borrar }: {
 }) {
   const [tipo, setTipo] = useState(fila.tipo);
   const [estado, correr] = useEstado();
-  const cambiar = (n: Partial<FilaPrevision>) => correr(() => guardar({ ...fila, ...n }));
+  const cambiar = (n: Partial<FilaPrevision>) =>
+    correr(() => guardar({ ...fila, ...n }));
   const video = fila.medio === "video";
   return (
-    <li className="adm-prevision" data-inactiva={!fila.activo || undefined} data-rareza={fila.rareza} data-medio={fila.medio}>
+    <li
+      className="adm-prevision"
+      data-inactiva={!fila.activo || undefined}
+      data-rareza={fila.rareza}
+      data-medio={fila.medio}
+    >
       <span className="adm-marco adm-prevision-foto">
-        {video ? <VideoMini store={store} ruta={fila.ruta} /> : <Imagen store={store} carpeta="previsiones" ruta={fila.ruta} />}
+        {video ? (
+          <VideoMini store={store} ruta={fila.ruta} />
+        ) : (
+          <Imagen store={store} carpeta="previsiones" ruta={fila.ruta} />
+        )}
       </span>
-      <span className="adm-gris adm-nota-chica adm-prevision-nombre" title="lo que se ve debajo">
+      <span
+        className="adm-gris adm-nota-chica adm-prevision-nombre"
+        title="lo que se ve debajo"
+      >
         {fila.nombre ?? nombreDeRuta(fila.ruta)}
-        {video ? <span className="adm-prevision-medio"> · video {fila.duracion ? tiempo(fila.duracion, false) : ""}</span> : null}
+        {video ? (
+          <span className="adm-prevision-medio">
+            {" "}
+            · video {fila.duracion ? tiempo(fila.duracion, false) : ""}
+          </span>
+        ) : null}
       </span>
       <input
         className="adm-input adm-mini"
@@ -611,7 +850,12 @@ function TarjetaPrevision({ store, fila, prob, guardar, borrar }: {
           if (t !== fila.tipo) void cambiar({ tipo: t });
         }}
       />
-      <select className="adm-input adm-mini" value={fila.rareza} aria-label="rareza" onChange={(e) => void cambiar({ rareza: e.target.value as Rareza })}>
+      <select
+        className="adm-input adm-mini"
+        value={fila.rareza}
+        aria-label="rareza"
+        onChange={(e) => void cambiar({ rareza: e.target.value as Rareza })}
+      >
         {RAREZAS.map((r) => (
           <option key={r.id} value={r.id}>
             {r.nombre}
@@ -620,7 +864,11 @@ function TarjetaPrevision({ store, fila, prob, guardar, borrar }: {
       </select>
       <div className="adm-frase-meta">
         <label className="adm-check">
-          <input type="checkbox" checked={fila.activo} onChange={(e) => void cambiar({ activo: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={fila.activo}
+            onChange={(e) => void cambiar({ activo: e.target.checked })}
+          />
           activa
         </label>
         <span className="adm-prob" title="probabilidad de salir en cada ciclo">

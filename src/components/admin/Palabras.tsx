@@ -18,16 +18,6 @@ import type { AjustesPrevision } from "@/lib/contenido/tipos";
 import { EstadoTexto, useEstado } from "./comun";
 
 const TODAS = FUENTES_DESTELLO.map((f) => f.id);
-const MUESTRAS = [
-  "sustancia",
-  "numograma",
-  "atención",
-  "gravedad",
-  "afecto",
-  "vacío",
-  "máquinas",
-  "alegría",
-];
 
 export function Palabras({
   store,
@@ -91,9 +81,9 @@ export function Palabras({
       aria-label="palabras de la previsión"
     >
       <p className="adm-gris adm-palabras-nota">
-        durante la previsión, arriba, destellan palabras sueltas de los libros (
-        {palabras.length} palabras, en español), cada una en una fuente
-        distinta. aquí eliges qué fuentes pueden salir.
+        en las previsiones de tipo «previsión», arriba destellan palabras
+        sueltas de los libros ({palabras.length} palabras, en español), cada una
+        en una fuente distinta. aquí eliges qué fuentes pueden salir.
       </p>
       <div className="adm-barra">
         <span className="adm-cuenta">
@@ -137,7 +127,7 @@ export function Palabras({
               </button>
             </legend>
             <ul className="adm-fuentes-lista">
-              {fs.map((f, i) => {
+              {fs.map((f) => {
                 const on = activas.has(f.id);
                 return (
                   <li key={f.id}>
@@ -160,7 +150,7 @@ export function Palabras({
                           fontStretch: f.ancho ?? "100%",
                         }}
                       >
-                        {MUESTRAS[i % MUESTRAS.length]}
+                        ejemplo
                       </span>
                       <span className="adm-fuente-nombre">{f.nombre}</span>
                     </label>
