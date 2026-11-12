@@ -232,6 +232,17 @@ body {
   pointer-events: none;
 }
 
+/* la rejilla de caracteres de la mutación (mismas medidas que AREA en wordmark-mutante.ts) */
+.wordmark-ascii {
+  position: absolute;
+  left: -0.06em;
+  top: -2.42em;
+  width: 7.8em;
+  height: 3.42em;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 .hint {
   grid-column: 2;
   grid-row: 3;
