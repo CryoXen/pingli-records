@@ -307,8 +307,9 @@ export const site = {
      */
     song: { src: "/audio/tan-final.mp3", gainDb: 0 } as { src: string; gainDb: number } | null,
     /**
-     * Durante la previsión, arriba: palabras sueltas al azar de los libros
-     * del proyecto, una a la vez y cada una en otra fuente (src/lib/destello.ts).
+     * Previsiones de tipo "previsión": en lugar del nombre del archivo,
+     * palabras sueltas al azar de los libros con la extensión del archivo
+     * ("sustancia.mp4"), cambiando a toda velocidad (src/lib/destello.ts).
      * `cada`: segundos que dura cada palabra.
      */
     palabras: { enabled: true, cada: 0.06 },

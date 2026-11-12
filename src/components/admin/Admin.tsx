@@ -19,18 +19,11 @@ import { Artistas } from "./Artistas";
 import { Frases } from "./Frases";
 import { Lanzamientos } from "./Lanzamientos";
 import { Musica } from "./Musica";
-import { Palabras } from "./Palabras";
 import { Previsiones } from "./Previsiones";
 import { Sonidos } from "./Sonidos";
 
 type Pestana =
-  | "frases"
-  | "lanzamientos"
-  | "artistas"
-  | "previsiones"
-  | "palabras"
-  | "música"
-  | "sonidos";
+  "frases" | "lanzamientos" | "artistas" | "previsiones" | "música" | "sonidos";
 /** El menú: grupos y, dentro, sus secciones (con el nombre que se muestra). */
 const MENU: readonly {
   grupo: string;
@@ -46,10 +39,7 @@ const MENU: readonly {
   },
   {
     grupo: "previsión",
-    secciones: [
-      { id: "previsiones", nombre: "imágenes y videos" },
-      { id: "palabras", nombre: "palabras" },
-    ],
+    secciones: [{ id: "previsiones", nombre: "imágenes y videos" }],
   },
   {
     grupo: "sonido",
@@ -378,9 +368,6 @@ function Panel({
               setFilas={(f) => setPrevisiones((p) => f(p ?? []))}
               avisar={avisar}
             />
-          ) : null}
-          {cargado && pestana === "palabras" ? (
-            <Palabras store={store} avisar={avisar} />
           ) : null}
           {cargado && pestana === "música" ? (
             <Musica store={store} avisar={avisar} />

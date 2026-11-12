@@ -211,10 +211,6 @@ export function completarPrevision(
   return {
     duracionCiclo: entre(a?.duracionCiclo, DURACION_CICLO, site.cycle.duration),
     duracionFoto: entre(a?.duracionFoto, DURACION_FOTO, site.cycle.hold),
-    fuentes:
-      Array.isArray(a?.fuentes) && a.fuentes.length
-        ? a.fuentes.filter((x) => typeof x === "string")
-        : null,
   };
 }
 

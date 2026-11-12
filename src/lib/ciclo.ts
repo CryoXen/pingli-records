@@ -41,6 +41,7 @@
 import type { Prevision, Rareza } from "@/lib/contenido/tipos";
 import {
   activaDestello,
+  extensionDe,
   mountDestello,
   prepararDestello,
   type DestelloSettings,
@@ -340,9 +341,9 @@ export function mountCycle(
     if (ready || !all.length || (!force && Date.now() < nextTry))
       return Promise.resolve();
     hooks.prepare?.();
-    // las palabras y sus fuentes, solo si alguna previsión las va a usar
+    // las palabras, solo si alguna previsión las va a usar
     if (s.palabras?.enabled && all.some((i) => activaDestello(i.tipo)))
-      void prepararDestello(s.palabras);
+      void prepararDestello();
     loading = (async () => {
       const failed = new Set<string>();
       const last = readLast();
@@ -394,6 +395,7 @@ export function mountCycle(
     );
 
   let caption: HTMLElement | null = null;
+  let pararDestello = () => {};
 
   /**
    * El tamaño de la previsión, calculado: completa, centrada exacto en lo que
@@ -451,13 +453,19 @@ export function mountCycle(
       caption = document.createElement("p");
       caption.className = "prevision-nombre";
       caption.textContent = nombre;
+      // tipo "previsión": en lugar del nombre, palabras de los libros con la extensión del archivo
+      if (s.palabras?.enabled && activaDestello(r.p.tipo)) {
+        caption.dataset.destello = "";
+        pararDestello = mountDestello(
+          caption,
+          extensionDe(r.p.src),
+          s.palabras,
+        );
+      }
       obra.append(caption);
     }
     overlay.append(obra);
     document.body.append(overlay);
-    // arriba, palabras de los libros a toda velocidad (solo las de tipo "previsión")
-    if (s.palabras && activaDestello(r.p.tipo))
-      mountDestello(overlay, s.palabras);
     layout();
     window.addEventListener("resize", layout);
     // quieta hasta que se acaba el tiempo
@@ -600,6 +608,7 @@ export function mountCycle(
     window.removeEventListener("resize", layout);
     timers.forEach((t) => window.clearTimeout(t));
     if (ready?.el instanceof HTMLVideoElement) ready.el.pause();
+    pararDestello();
     overlay?.remove();
     urls.forEach((u) => URL.revokeObjectURL(u));
   };

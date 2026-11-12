@@ -309,7 +309,8 @@ export function Previsiones({
               onChange={(e) => setTipo(e.target.value)}
             />
             <span className="adm-gris adm-nota-chica">
-              con tipo «previsión», arriba destellan las palabras de los libros.
+              con tipo «previsión», en lugar del nombre del archivo destellan
+              palabras de los libros.
             </span>
           </label>
           <div className="adm-campo">

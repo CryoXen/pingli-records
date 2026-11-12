@@ -196,8 +196,6 @@ export type AjustesPrevision = {
   duracionCiclo: number;
   /** Segundos que se ve cada foto (los videos duran lo que duran). */
   duracionFoto: number;
-  /** Fuentes del destello de palabras (ids de src/config/fuentes-destello.ts); null = todas. */
-  fuentes: string[] | null;
 };
 
 export type Contenido = {

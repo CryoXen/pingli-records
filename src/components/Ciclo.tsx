@@ -36,7 +36,6 @@ export default function Ciclo({
       ...site.cycle,
       duration: prevision.duracionCiclo,
       hold: prevision.duracionFoto,
-      palabras: { ...site.cycle.palabras, fuentes: prevision.fuentes },
     };
     return mountCycle(ciclo, images, entered, () => ambient.stop(), {
       // la canción final se descarga junto con la previsión y suena cuando aparece una foto

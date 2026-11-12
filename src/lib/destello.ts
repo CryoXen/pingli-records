@@ -1,26 +1,18 @@
 /**
- * El destello de palabras de la previsión (solo las de tipo "previsión"):
- * arriba de la pantalla, palabras
- * sueltas al azar de los libros del proyecto (src/config/palabras.json: las
- * más usadas de los cuatro libros en español), una a la vez y a toda
- * velocidad; cada palabra sale en una fuente distinta
- * (src/config/fuentes-destello.ts; cuáles, se elige en el admin).
+ * El destello de palabras de la previsión (solo las de tipo "previsión"): en
+ * el lugar del nombre del archivo, debajo de la imagen o el video, una palabra
+ * al azar de los libros del proyecto con la extensión real del archivo
+ * ("sustancia.mp4", "gravedad.mp4"…), cambiando a toda velocidad. En la misma
+ * letra del nombre de archivo.
  *
- * Las palabras y las fuentes se descargan antes, junto con la previsión
- * (prepararDestello); si alguna fuente no llega, esa palabra sale en la
- * tipografía del sitio.
+ * Las palabras (src/config/palabras.json: las más usadas de los cuatro libros
+ * en español) se descargan antes, junto con la previsión (prepararDestello).
  */
-import {
-  fuentesElegidas,
-  type FuenteDestello,
-} from "@/config/fuentes-destello";
 
 export type DestelloSettings = {
   readonly enabled: boolean;
-  /** Segundos que dura cada palabra en pantalla. */
+  /** Segundos que dura cada palabra. */
   readonly cada: number;
-  /** Ids de las fuentes que pueden salir (null = todas). */
-  readonly fuentes?: readonly string[] | null;
 };
 
 /**
@@ -36,64 +28,51 @@ export function activaDestello(tipo: string | null | undefined): boolean {
   return /^prevision(es)?$/.test(t);
 }
 
+/** La extensión real del archivo (".mp4", ".jpg"…), de su ruta guardada. */
+export function extensionDe(src: string): string {
+  const m = decodeURIComponent(src.split(/[?#]/)[0]).match(
+    /\.([a-z0-9]{2,5})$/i,
+  );
+  return m ? `.${m[1].toLowerCase()}` : "";
+}
+
 let palabras: string[] | null = null;
 let preparando: Promise<void> | null = null;
 
-const css = (f: FuenteDestello) => `${f.peso ?? 400} 16px ${f.familia}`;
-
-/** Descarga las palabras y las fuentes elegidas (una sola vez). */
-export function prepararDestello(s: DestelloSettings): Promise<void> {
-  preparando ??= (async () => {
-    const m = await import("@/config/palabras.json");
-    palabras = (m.default ?? m) as string[];
-    if (document.fonts)
-      await Promise.allSettled(
-        fuentesElegidas(s.fuentes).map((f) =>
-          document.fonts.load(css(f), "añ"),
-        ),
-      );
-  })().catch(() => {});
+/** Descarga las palabras (una sola vez). */
+export function prepararDestello(): Promise<void> {
+  preparando ??= import("@/config/palabras.json")
+    .then((m) => {
+      palabras = (m.default ?? m) as string[];
+    })
+    .catch(() => {});
   return preparando;
 }
 
-/** Arranca el destello dentro de la previsión; devuelve cómo detenerlo. */
+/** Hace destellar `el` con palabras + `ext`; devuelve cómo detenerlo. */
 export function mountDestello(
-  overlay: HTMLElement,
+  el: HTMLElement,
+  ext: string,
   s: DestelloSettings,
 ): () => void {
   if (!s.enabled) return () => {};
-  const fuentes = fuentesElegidas(s.fuentes);
-  const p = document.createElement("p");
-  p.className = "prevision-palabras";
-  overlay.append(p);
   let vivo = true;
   let raf = 0;
   let ultima = 0;
-  let fuente = -1;
-  void prepararDestello(s);
+  void prepararDestello();
 
   const paso = (ahora: number) => {
     if (!vivo) return;
     raf = requestAnimationFrame(paso);
     if (!palabras || ahora - ultima < s.cada * 1000) return;
     ultima = ahora;
-    // nunca la misma fuente dos veces seguidas (si hay más de una)
-    let i = Math.floor(Math.random() * Math.max(1, fuentes.length - 1));
-    if (fuentes.length > 1 && i >= fuente) i++;
-    fuente = i % fuentes.length;
-    const f = fuentes[fuente];
-    p.style.fontFamily = `${f.familia}, "Archivo", sans-serif`;
-    p.style.fontWeight = String(f.peso ?? 400);
-    p.style.fontStretch = f.ancho ?? "100%";
-    // las cursivas son más chicas a la vista: salen un poco más grandes (destello.css)
-    p.dataset.grupo = f.grupo;
-    p.textContent = palabras[Math.floor(Math.random() * palabras.length)];
+    el.textContent =
+      palabras[Math.floor(Math.random() * palabras.length)] + ext;
   };
   raf = requestAnimationFrame(paso);
 
   return () => {
     vivo = false;
     cancelAnimationFrame(raf);
-    p.remove();
   };
 }
