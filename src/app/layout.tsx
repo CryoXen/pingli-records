@@ -10,6 +10,7 @@ import "./muro.css";
 import "./zona.css";
 import "./artistas.css";
 import "./menu-admin.css";
+import "./destello.css";
 
 export const metadata: Metadata = {
   title: "pingli records",

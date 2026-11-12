@@ -304,6 +304,12 @@ export const site = {
      * (pestaña "música").
      */
     song: { src: "/audio/tan-final.mp3", gainDb: 0 } as { src: string; gainDb: number } | null,
+    /**
+     * Durante la previsión, arriba: palabras sueltas al azar de los libros
+     * del proyecto, una a la vez y cada una en otra fuente (src/lib/destello.ts).
+     * `cada`: segundos que dura cada palabra.
+     */
+    palabras: { enabled: true, cada: 0.06 },
     /** "contain": la imagen se ve completa; "cover": llena la pantalla y recorta. */
     fit: "contain" as "contain" | "cover",
     /**

@@ -39,6 +39,7 @@
  * previsión. Es la misma en los dos mundos y no se reinicia al cruzar.
  */
 import type { Prevision, Rareza } from "@/lib/contenido/tipos";
+import { mountDestello, prepararDestello, type DestelloSettings } from "@/lib/destello";
 
 export type CycleSettings = {
   readonly enabled: boolean;
@@ -50,6 +51,8 @@ export type CycleSettings = {
   readonly fit: "contain" | "cover";
   /** Peso de cada rareza. */
   readonly rareza: Readonly<Record<Rareza, number>>;
+  /** El destello de palabras de arriba (src/lib/destello.ts). */
+  readonly palabras?: DestelloSettings;
 };
 
 const LAST_KEY = "pingli:prevision";
@@ -292,6 +295,7 @@ export function mountCycle(
     if (loading) return loading;
     if (ready || !all.length || (!force && Date.now() < nextTry)) return Promise.resolve();
     hooks.prepare?.();
+    if (s.palabras?.enabled) void prepararDestello();
     loading = (async () => {
       const failed = new Set<string>();
       const last = readLast();
@@ -380,6 +384,8 @@ export function mountCycle(
     }
     overlay.append(obra);
     document.body.append(overlay);
+    // arriba, palabras de los libros a toda velocidad
+    if (s.palabras) mountDestello(overlay, s.palabras);
     layout();
     window.addEventListener("resize", layout);
     // quieta hasta que se acaba el tiempo

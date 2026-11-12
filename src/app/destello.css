@@ -1,0 +1,174 @@
+/*
+ * Las fuentes del destello de palabras de la previsión (src/lib/destello.ts).
+ * Subconjunto latino (con acentos y ñ); todas con licencia SIL Open Font
+ * License 1.1 (de Google Fonts, vía @fontsource). El navegador solo las
+ * descarga cuando se usan: poco antes de la previsión.
+ */
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/orbitron.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Michroma";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/michroma.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Major Mono Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/major-mono-display.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Megrim";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/megrim.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Wallpoet";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/wallpoet.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Dots";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/zen-dots.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tourney";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/tourney.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Turret Road";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/turret-road.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Syncopate";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/syncopate.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "VT323";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/vt323.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/dotgothic16.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Silkscreen";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/silkscreen.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Doto";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/doto.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Sixtyfour";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/sixtyfour.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bungee Hairline";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/bungee-hairline.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik Glitch";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/rubik-glitch.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Monoton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/monoton.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Gruppo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/destello/gruppo.woff2") format("woff2");
+}
+
+/* una palabra a la vez, arriba al centro, dentro del margen de la previsión */
+.prevision-palabras {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + var(--py) / 2);
+  left: 0;
+  right: 0;
+  margin: 0;
+  transform: translateY(-50%);
+  color: var(--ink);
+  font-size: clamp(14px, 1.5vw, 19px);
+  line-height: 1;
+  height: 1em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* llenando la pantalla, las palabras van encima de la imagen: que se lean */
+.prevision[data-fit="cover"] .prevision-palabras {
+  mix-blend-mode: difference;
+  color: #fff;
+}
