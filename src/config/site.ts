@@ -125,8 +125,8 @@ export const site = {
     /** "ascii": se deshace en caracteres que se reacomodan; "trazos": las líneas se deforman. */
     estilo: "trazos" as "ascii" | "trazos",
     /** Cuánto se queda como texto y como logo. */
-    texto: 7,
-    logo: 5.5,
+    texto: 12,
+    logo: 12,
     /** Lo que dura cada mutación. */
     mutacion: 2.6,
   },
