@@ -217,6 +217,32 @@ body {
   line-height: 0.95;
 }
 
+/* el nombre que muta en el logo: el dibujo va encima del texto, en sus mismas medidas (1000 = 1em) */
+.wordmark {
+  position: relative;
+}
+
+.wordmark-mutante {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1em;
+  height: 0.95em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* la rejilla de caracteres de la mutación (mismas medidas que AREA en wordmark-mutante.ts) */
+.wordmark-ascii {
+  position: absolute;
+  left: -0.06em;
+  top: -2.42em;
+  width: 7.8em;
+  height: 3.42em;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 .hint {
   grid-column: 2;
   grid-row: 3;
