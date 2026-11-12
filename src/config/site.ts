@@ -123,12 +123,12 @@ export const site = {
   wordmark: {
     enabled: true,
     /** "ascii": se deshace en caracteres que se reacomodan; "trazos": las líneas se deforman. */
-    estilo: "ascii" as "ascii" | "trazos",
+    estilo: "trazos" as "ascii" | "trazos",
     /** Cuánto se queda como texto y como logo. */
     texto: 7,
     logo: 5.5,
     /** Lo que dura cada mutación. */
-    mutacion: 3.4,
+    mutacion: 2.6,
   },
 
   /**
