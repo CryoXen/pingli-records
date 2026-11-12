@@ -12,13 +12,15 @@
  *    logo, con un temblor que crece a la mitad del camino.
  *
  * En reposo como texto se ve el texto de verdad (el h1); en reposo como logo,
- * el dibujo nítido. Con "reducir movimiento" no se monta: queda el texto.
+ * el dibujo nítido. Con "reducir movimiento" no se deforma nada: el texto y
+ * el logo se funden uno en el otro ("fundido").
  */
 
 type Datos = { linea: number; pares: { t: number[]; l: number[] }[] };
 
 export type MutanteSettings = {
-  readonly estilo: "ascii" | "trazos";
+  /** "fundido" (sin deformar) es el que se usa con "reducir movimiento". */
+  readonly estilo: "ascii" | "trazos" | "fundido";
   /** Segundos como texto, como logo y lo que dura cada mutación. */
   readonly texto: number;
   readonly logo: number;
@@ -239,7 +241,28 @@ export function mountWordmarkMutante(h1: HTMLElement, s: MutanteSettings, listo:
       raf = requestAnimationFrame(paso);
     }
 
-    const mutar = s.estilo === "ascii" ? mutarAscii : mutarTrazos;
+    // ———————————————————————————— "fundido": sin deformar, uno se apaga y el otro aparece
+    function mutarFundido(desde: number, hasta: number, alTerminar: () => void) {
+      path.setAttribute("d", trazo(1, 0));
+      dibujo.style.visibility = "visible";
+      letras!.style.visibility = "";
+      const t0 = performance.now();
+      const paso = (ahora: number) => {
+        if (!vivo) return;
+        const u = Math.min(1, (ahora - t0) / 1400);
+        const T = desde + (hasta - desde) * u;
+        dibujo.style.opacity = String(entre(T, 0.5, 1));
+        letras!.style.opacity = String(1 - entre(T, 0, 0.5));
+        if (u < 1) {
+          raf = requestAnimationFrame(paso);
+          return;
+        }
+        alTerminar();
+      };
+      raf = requestAnimationFrame(paso);
+    }
+
+    const mutar = s.estilo === "ascii" ? mutarAscii : s.estilo === "fundido" ? mutarFundido : mutarTrazos;
 
     function reposar(en: number) {
       timer = setTimeout(() => esperarVisible(() => mutar(en, 1 - en, () => reposar(1 - en))), (en ? s.logo : s.texto) * 1000);

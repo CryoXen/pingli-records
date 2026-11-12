@@ -23,8 +23,10 @@ export function Overlay({ hud, cuenta }: { hud: HudRefs; /** Segundos de la cuen
   const nombre = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const h1 = nombre.current;
-    if (!h1 || !site.wordmark.enabled || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return mountWordmarkMutante(h1, site.wordmark, entered);
+    if (!h1 || !site.wordmark.enabled) return;
+    // con "reducir movimiento" no se deforma: el texto y el logo se funden uno en el otro
+    const calmado = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return mountWordmarkMutante(h1, { ...site.wordmark, estilo: calmado ? "fundido" : site.wordmark.estilo }, entered);
   }, []);
 
   return (
