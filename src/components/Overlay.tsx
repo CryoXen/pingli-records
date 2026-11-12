@@ -24,9 +24,8 @@ export function Overlay({ hud, cuenta }: { hud: HudRefs; /** Segundos de la cuen
   useEffect(() => {
     const h1 = nombre.current;
     if (!h1 || !site.wordmark.enabled) return;
-    // con "reducir movimiento" no se deforma: el texto y el logo se funden uno en el otro
-    const calmado = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    return mountWordmarkMutante(h1, { ...site.wordmark, estilo: calmado ? "fundido" : site.wordmark.estilo }, entered);
+    // la mutación se ve siempre, también con "reducir movimiento" (decisión de Chris)
+    return mountWordmarkMutante(h1, site.wordmark, entered);
   }, []);
 
   return (

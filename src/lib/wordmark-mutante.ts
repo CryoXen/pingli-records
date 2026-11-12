@@ -12,14 +12,13 @@
  *    logo, con un temblor que crece a la mitad del camino.
  *
  * En reposo como texto se ve el texto de verdad (el h1); en reposo como logo,
- * el dibujo nítido. Con "reducir movimiento" no se deforma nada: el texto y
- * el logo se funden uno en el otro ("fundido").
+ * el dibujo nítido. Se ve siempre, también con "reducir movimiento".
  */
 
 type Datos = { linea: number; pares: { t: number[]; l: number[] }[] };
 
 export type MutanteSettings = {
-  /** "fundido" (sin deformar) es el que se usa con "reducir movimiento". */
+  /** "fundido": sin deformar, uno se apaga y el otro aparece (no se usa por ahora). */
   readonly estilo: "ascii" | "trazos" | "fundido";
   /** Segundos como texto, como logo y lo que dura cada mutación. */
   readonly texto: number;
