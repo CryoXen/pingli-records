@@ -92,12 +92,12 @@ export const site = {
     },
     /** Textos de la zona (el cuarto dentro de la imagen de los carteles). */
     zone: {
-      /** Encabezado, junto a la cuenta de carteles leídos. */
-      title: "carteles",
+      /** Encabezado, junto a la cuenta de ecos leídos. */
+      title: "ecos",
       claro: "claro",
       oscuro: "oscuro",
       /** Para lectores de pantalla. */
-      label: "carteles leídos",
+      label: "ecos leídos",
     },
     /** Textos del panel de lanzamiento. */
     panel: {
