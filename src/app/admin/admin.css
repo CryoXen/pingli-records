@@ -50,7 +50,6 @@
 /* —— marca, arriba —— */
 .adm-marca {
   margin: 0;
-  min-width: 0;
   font-family: var(--font-ui);
   font-stretch: 125%;
   font-weight: 600;
@@ -58,8 +57,6 @@
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .adm-marca span {
@@ -858,31 +855,19 @@
   }
 
   .adm-menu-boton {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    min-width: 76px;
-    min-height: 44px;
-    padding: 8px 16px;
+    display: inline-block;
+    min-width: 62px;
+    padding: 7px 10px;
     border: 1px solid var(--ink);
     background: var(--paper);
     color: var(--ink);
     font: inherit;
     cursor: pointer;
-    touch-action: manipulation;
   }
 
   .adm-menu-boton[aria-expanded="true"] {
     border-color: var(--link);
     color: var(--link);
-  }
-
-  /* la marca cede espacio: tamaño normal y, si no cabe, se recorta */
-  .adm-marca {
-    flex: 0 1 auto;
-    font-stretch: 100%;
-    font-size: 14px;
   }
 
   .adm-donde {
@@ -893,17 +878,8 @@
   }
 
   .adm-sesion {
-    align-items: center;
     margin-left: auto;
-    gap: 6px 16px;
-  }
-
-  .adm-sesion .adm-link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding-block: 0;
-    touch-action: manipulation;
+    gap: 12px;
   }
 
   .adm-correo {
@@ -938,16 +914,8 @@
     transition: transform 0.18s ease-out;
   }
 
-  .adm-lado ul {
-    gap: 2px;
-  }
-
   .adm-lado-opcion {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 11px 12px 11px 14px;
-    touch-action: manipulation;
+    padding: 10px 10px 10px 14px;
   }
 
   .adm-velo {
@@ -999,13 +967,6 @@
 
   .adm-id {
     padding-top: 0;
-  }
-}
-
-/* teléfonos angostos: la marca suelta el " admin" para no chocar con el menú */
-@media (max-width: 540px) {
-  .adm-marca span {
-    display: none;
   }
 }
 
